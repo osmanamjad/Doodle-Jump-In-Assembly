@@ -21,6 +21,8 @@ main:
 
 	jal makeBoardBlue
 	
+	jal makeLedges
+	
 	jal jumpUpSetup
 
 makeBoardSetup:
@@ -71,6 +73,7 @@ jumpUp:
 	
 	jal makeBoardSetup
 	jal makeBoardBlue
+	jal makeLedges
 	
 	addi $sp, $sp, -4 # put space on stack for start value
 	sw $t4, 0($sp) # load the value into the allocated space
@@ -93,6 +96,7 @@ jumpDown:
 	
 	jal makeBoardSetup
 	jal makeBoardBlue
+	jal makeLedges
 	
 	addi $sp, $sp, -4 # put space on stack for start value
 	sw $t3, 0($sp) # load the value into the allocated space
@@ -105,6 +109,22 @@ jumpDown:
 	syscall
 	
 	j jumpDown
+	
+makeLedges:
+	li $v0, 42
+	li $a0, 0
+	li $a1, 1000
+	syscall
+	
+	sll $a0, $a0, 2
+	add $t7, $s0, $a0
+	
+	sw $s2, ($t7) #put green in pixel in row 1
+	sw $s2, 4($t7) #put green in pixel in row 1
+	sw $s2, 8($t7) #put green in pixel in row 1
+	sw $s2, 12($t7) #put green in pixel in row 1
+	
+	jr $ra
 	
 	
 	
