@@ -1,3 +1,10 @@
+#####################################################################
+#
+# CSCB58 Fall 2020 Assembly Final Project
+# University of Toronto, Scarborough
+#
+# Student: Muhammad Osman Amjad, 1005308016
+#
 # Bitmap Display Configuration:
 # - Unit width in pixels: 8					     
 # - Unit height in pixels: 8
@@ -5,6 +12,25 @@
 # - Display height in pixels: 256
 # - Base Address for Display: 0x10008000 ($gp)
 #
+# Which milestone is reached in this submission?
+# (See the assignment handout for descriptions of the milestones)
+# - Milestone 1/2/3/4/5 (choose the one the applies)
+#
+# Which approved additional features have been implemented?
+# (See the assignment handout for the list of additional features)
+# 1. (fill in the feature, if any)
+# 2. (fill in the feature, if any)
+# 3. (fill in the feature, if any)
+# ... (add more if necessary)
+#
+# Link to video demonstration for final submission:
+# - (insert YouTube / MyMedia / other URL here). 
+#
+# Any additional information that the TA needs to know:
+# - (write here, if any)
+#
+#####################################################################
+
 .data
 	displayAddress:	.word	0x10008000
 	charStartAddress: .word 0
@@ -49,7 +75,8 @@ makeCharacter:
 	lw $t3, 0($sp) # load value at top of stack
 	addi $sp, $sp, 4 # decrease size of stack
 	
-	add $t7, $t3, $s0 #store the address we want the character to start from
+	add $t7, $t3, $s0 # store the address we want the character to start from into t7
+	sw $t7, charStartAddress # store the value of t7 
 	
 	sw $s1, ($t7) #put golden in pixel in row 1
 	sw $s1, -4($t7) #put golden in pixel in row 1
@@ -85,7 +112,11 @@ jumpUp:
 	jal makeCharacter
 	
 	addi $t4, $t4, -256
-	
+
+	lw $t7, 0xffff0000 # load value for keystroke into t7 
+	beq $t7, 1, checkJK # if there is a keystroke, branch to check j or k
+
+afterCheckInput:	
 	li $v0, 32
 	li $a0, 100
 	syscall
@@ -179,6 +210,21 @@ makeLedges:
 	
 	jr $ra
 	
+checkJK:
+	lw $t7, 0xffff0004 
+	beq $t7, 0x6a, respondToJ 
+	beq $t7, 0x6b, respondToK
+afterRespond:
+	j afterCheckInput
+	
+respondToJ:
+	addi $t4, $t4, -4
+	j afterRespond
+	
+respondToK:
+	addi $t4, $t4, 4
+	j afterRespond
+		
 CentralProcessing:
 	#Check for keyboard input
 	#Update the location of the Doodler accordingly
