@@ -1,5 +1,3 @@
-# Demo for painting
-#
 # Bitmap Display Configuration:
 # - Unit width in pixels: 8					     
 # - Unit height in pixels: 8
@@ -9,10 +7,15 @@
 #
 .data
 	displayAddress:	.word	0x10008000
+	charStartAddress: .word 0
+	ledge1StartAddress: .word 4016
+	ledge2StartAddress: .word 0
+	ledge3StartAddress: .word 0
+	
 .text
 	lw $s0, displayAddress	# $s0 stores the base address for display
 	li $s1, 0xffd700	# $s1 stores the golden colour code
-	li $s2, 0x00ff00	# $s2 stores the green colour code
+	li $s2, 0xbdb76b	# $s2 stores the dark green colour code
 	li $s3, 0x000000	# $s3 stores the black colour code
 	li $s4, 0xb0e0e6       # $s4 stores the aqua colour code
 	
@@ -20,6 +23,8 @@ main:
 	jal makeBoardSetup
 
 	jal makeBoardBlue
+	
+	jal makeLedgesSetup
 	
 	jal makeLedges
 	
@@ -66,7 +71,7 @@ returnUp:
 	jr $ra
 
 jumpUpSetup:
-	li $t4 4036
+	li $t4 3908
 	j jumpUp
 jumpUp:
 	bltz, $t4, jumpDownSetup 
@@ -88,7 +93,7 @@ jumpUp:
 	j jumpUp
 
 jumpDownSetup:
-	li $t4 4036
+	li $t4 3908
 	li $t3 68
 	j jumpDown
 jumpDown:
@@ -110,23 +115,69 @@ jumpDown:
 	
 	j jumpDown
 	
-makeLedges:
-	li $v0, 42
-	li $a0, 0
-	li $a1, 1000
+makeLedgesSetup:
+	#li $v0, 42 # prepare syscall to produce random int
+	#li $a0, 0 
+	#li $a1, 1000 # set max value of random int to 1000
+	#syscall
+	
+	#sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	lw $t7, ledge1StartAddress # load 4036 into t7
+	add $t7, $s0, $t7 #add display address + 4036 
+	sw $t7, ledge1StartAddress 
+	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 1000 # set max value of random int to 1000
 	syscall
 	
-	sll $a0, $a0, 2
-	add $t7, $s0, $a0
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge2StartAddress
+	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 1000 # set max value of random int to 1000
+	syscall
+	
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge3StartAddress
+	
+makeLedges:
+	lw $t7, ledge1StartAddress #load the address into t7
 	
 	sw $s2, ($t7) #put green in pixel in row 1
 	sw $s2, 4($t7) #put green in pixel in row 1
 	sw $s2, 8($t7) #put green in pixel in row 1
 	sw $s2, 12($t7) #put green in pixel in row 1
+	sw $s2, 16($t7) #put green in pixel in row 1
+	sw $s2, 20($t7) #put green in pixel in row 1
+	sw $s2, 24($t7) #put green in pixel in row 1
+	
+	
+	lw $t7, ledge2StartAddress #load the address into t7
+	
+	sw $s2, ($t7) #put green in pixel in row 1
+	sw $s2, 4($t7) #put green in pixel in row 1
+	sw $s2, 8($t7) #put green in pixel in row 1
+	sw $s2, 12($t7) #put green in pixel in row 1
+	sw $s2, 16($t7) #put green in pixel in row 1
+	sw $s2, 20($t7) #put green in pixel in row 1
+	sw $s2, 24($t7) #put green in pixel in row 1
+	
+	
+	lw $t7, ledge3StartAddress #load the address into t7
+	
+	sw $s2, ($t7) #put green in pixel in row 1
+	sw $s2, 4($t7) #put green in pixel in row 1
+	sw $s2, 8($t7) #put green in pixel in row 1
+	sw $s2, 12($t7) #put green in pixel in row 1
+	sw $s2, 16($t7) #put green in pixel in row 1
+	sw $s2, 20($t7) #put green in pixel in row 1
+	sw $s2, 24($t7) #put green in pixel in row 1
 	
 	jr $ra
-	
-	
 	
 CentralProcessing:
 	#Check for keyboard input
