@@ -46,6 +46,9 @@
 	li $s4, 0xb0e0e6       # $s4 stores the aqua colour code
 	
 main:
+	add $t7, $s0, 4164 #3908
+	sw $t7, charStartAddress # store the value of t7 into charStartAddress
+	
 	jal makeBoardSetup
 
 	jal makeBoardBlue
@@ -72,11 +75,7 @@ makeBoardBlue:
 	j makeBoardBlue
 	
 makeCharacter: 
-	lw $t3, 0($sp) # load value at top of stack
-	addi $sp, $sp, 4 # decrease size of stack
-	
-	add $t7, $t3, $s0 # store the address we want the character to start from into t7
-	sw $t7, charStartAddress # store the value of t7 
+	lw $t7, charStartAddress
 	
 	sw $s1, ($t7) #put golden in pixel in row 1
 	sw $s1, -4($t7) #put golden in pixel in row 1
@@ -98,7 +97,10 @@ returnUp:
 	jr $ra
 
 jumpUpSetup:
-	li $t4 3908
+	lw $t3, charStartAddress
+	addi $t3, $t3, -256
+	sw $t3, charStartAddress
+	sub $t4, $t3, $s0 # store the offset to displayAddress in t4
 	j jumpUp
 jumpUp:
 	bltz, $t4, jumpDownSetup 
@@ -107,16 +109,24 @@ jumpUp:
 	jal makeBoardBlue
 	jal makeLedges
 	
-	addi $sp, $sp, -4 # put space on stack for start value
-	sw $t4, 0($sp) # load the value into the allocated space
 	jal makeCharacter
 	
 	addi $t4, $t4, -256
+	addi $t3, $t3, -256
+	sw $t3, charStartAddress
 
-	lw $t7, 0xffff0000 # load value for keystroke into t7 
-	beq $t7, 1, checkJK # if there is a keystroke, branch to check j or k
+	lw $t6, 0xffff0000 # load value for keystroke into t7 
+	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
+NoInput1:	
+	li $v0, 32
+	li $a0, 100
+	syscall
+	
+	j jumpUp
 
-afterCheckInput:	
+checkInput1:
+	jal checkJK
+	
 	li $v0, 32
 	li $a0, 100
 	syscall
@@ -124,26 +134,43 @@ afterCheckInput:
 	j jumpUp
 
 jumpDownSetup:
-	li $t4 3908
-	li $t3 68
+	#li $t4 3908
+	li $t2 4096
+	lw $t3, charStartAddress
+	addi $t3, $t3, 256 #add 256 since the exit condition of jump up made charStartAddress invalid address
+	sw $t3, charStartAddress
+	sub $t4, $t3, $s0 # store the offset to displayAddress in t4
+
 	j jumpDown
 jumpDown:
-	bgt, $t3, $t4, jumpUpSetup 
+	bgt, $t4, $t2, jumpUpSetup 
 	
 	jal makeBoardSetup
 	jal makeBoardBlue
 	jal makeLedges
 	
-	addi $sp, $sp, -4 # put space on stack for start value
-	sw $t3, 0($sp) # load the value into the allocated space
 	jal makeCharacter
 	
+	addi $t4, $t4, 256
 	addi $t3, $t3, 256
+	sw $t3, charStartAddress
 	
+	lw $t6, 0xffff0000 # load value for keystroke into t7 
+	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
+NoInput2:	
 	li $v0, 32
 	li $a0, 100
 	syscall
 	
+	j jumpDown
+
+checkInput2:
+	jal checkJK
+	
+	li $v0, 32
+	li $a0, 100
+	syscall
+
 	j jumpDown
 	
 makeLedgesSetup:
@@ -215,14 +242,20 @@ checkJK:
 	beq $t7, 0x6a, respondToJ 
 	beq $t7, 0x6b, respondToK
 afterRespond:
-	j afterCheckInput
+	jr $ra
 	
 respondToJ:
 	addi $t4, $t4, -4
+	addi $t3, $t3, -4
+	sw $t3, charStartAddress
+	
 	j afterRespond
 	
 respondToK:
 	addi $t4, $t4, 4
+	addi $t3, $t3, 4
+	sw $t3, charStartAddress
+	
 	j afterRespond
 		
 CentralProcessing:
