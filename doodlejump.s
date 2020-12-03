@@ -46,7 +46,12 @@
 	li $s3, 0x000000	# $s3 stores the black colour code
 	li $s4, 0xb0e0e6       # $s4 stores the aqua colour code
 	lw $s5, charBottomAddress # $s5 stores the default bottom address 
+	li $s6, 3968 # $s6 stores the maximum display address of the character (1 row  above last row)
+	li $s7, 4096 # $s7 stores maximum display address for board.
 main:
+	add $s6, $s0, $s6 # never changed
+	add $s7, $s0, $s7 # never changed
+	
 	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
 	
@@ -66,19 +71,21 @@ main:
 	jal jumpUpSetup
 
 makeBoardSetup:
-	li $t5, 4096		# total size of board 
-	add $t5, $t5, $s0	# set t5 to base address + 4096 offset
+	li $t7, 4096		# total size of board 
+	add $t7, $t7, $s0	# set t5 to base address + 4096 offset
 	li $t6, 4096		# to keep track of how many pixels we've coloured
 	
 	jr $ra
 	
 makeBoardBlue:
-	subi $t5, $t5, 4
+	subi $t7, $t7, 4
 	subi $t6, $t6, 4
-	sw $s4, ($t5) # paint each unit
+	sw $s4, ($t7) # paint each unit
 	
 	beqz $t6, returnUp
 	j makeBoardBlue
+returnUp:
+	jr $ra
 	
 makeCharacter: 
 	lw $t7, charStartAddress
@@ -97,9 +104,6 @@ makeCharacter:
 	sw $s1, -264($t7) #put golden in pixel in row 3
 	sw $s1, -268($t7) #put golden in pixel in row 3
 	
-	jr $ra
-
-returnUp:
 	jr $ra
 
 jumpUpSetup:
@@ -138,7 +142,7 @@ checkInput1:
 	j jumpUp
 
 jumpDownSetup:
-	lw $t2, charBottomAddress # minimum point the doodle should jump down to
+	lw $t3, charBottomAddress # minimum point the doodle should jump down to
 	
 	lw $t4, charStartAddress # load the start address of the doodle
 	addi $t4, $t4, 128 #add 256 since the exit condition of jump up made charStartAddress invalid address
@@ -146,7 +150,7 @@ jumpDownSetup:
 
 	j jumpDown
 jumpDown:
-	bgt, $t4, $t2, jumpUpSetup 
+	bgt, $t4, $t3, jumpUpSetup 
 	
 	jal makeBoardSetup
 	jal makeBoardBlue
@@ -154,7 +158,8 @@ jumpDown:
 	
 	jal makeCharacter
 	jal checkLanding
-	lw $t2, charBottomAddress # load charBottom address into t2 in case it changed
+afterCheckLanding:
+	lw $t3, charBottomAddress # load charBottom address into t2 in case it changed
 	
 	addi $t4, $t4, 128
 	sw $t4, charStartAddress
@@ -184,7 +189,7 @@ makeLedgesSetup:
 	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 700 # set max value of random int to 700
+	li $a1, 700 # set max value of random int
 	syscall
 	
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
@@ -257,80 +262,108 @@ respondToK:
 	j afterRespond
 	
 checkLanding:
+	lw $t0, ledge1StartAddress
+	lw $t1, ledge2StartAddress
+	lw $t2, ledge3StartAddress
 	lw $t3, charStartAddress
-	lw $t5, ledge1StartAddress
-	lw $t6, ledge2StartAddress
-	lw $t7, ledge3StartAddress
 	
-	addi $t0, $t3, 152
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t3, 152
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase	
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
-	addi $t0, $t0, -4
-	beq $t0, $t7, ledge3NewBase
-	beq $t0, $t6, ledge2NewBase
-	beq $t0, $t5, ledge1NewBase
+	addi $t7, $t7, -4
+	beq $t7, $t0, ledge1NewBase
+	beq $t7, $t1, ledge2NewBase
+	beq $t7, $t2, ledge3NewBase
 	
 	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
-	jr $ra #return to jumpDown
+	j afterCheckLanding #return to jumpDown
 
 ledge3NewBase:
 	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
-	jr $ra #return to jumpDown
+	
+	addi $t3, $t3, 128
+	sw $t3, charStartAddress
+	#bgt $t3, $s6, setBottomBack
+	
+	addi $t1, $t1, 128
+	sw $t1, ledge2StartAddress
+	#bgt $t7, $s6, randomizeLedge3 # branch if t7 exceeds max display address
+	
+	#bgt $t6, $s6, Y
+	addi $t2, $t2, 128
+	sw $t2, ledge3StartAddress
+	
+	#blt $t5, $s0, Z
+	
+	jal makeBoardSetup
+	jal makeBoardBlue
+	jal makeLedges
+	
+	jal makeCharacter
+	
+	li $v0, 32
+	li $a0, 50
+	syscall
+	
+	j ledge3NewBase
+setBottomBack:
+	
+	j afterCheckLanding #return to jumpDown
 	
 ledge2NewBase:
 	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
-	jr $ra #return to jumpDown
+	j afterCheckLanding #return to jumpDown
 
 ledge1NewBase:
 	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
-	jr $ra #return to jumpDown
+	j afterCheckLanding #return to jumpDown
 		
 		
 CentralProcessing:
