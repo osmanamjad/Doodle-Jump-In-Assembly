@@ -191,10 +191,11 @@ ledge1Setup:
 makeLedge1:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int
+	li $a1, 26 # set max value of random int
 	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2800 #add 3000 so the ledge is near bottom of screen
+	addi $a0, $a0, 2816 #add soo the ledge is near bottom of screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge1StartAddress
 	
@@ -208,10 +209,11 @@ ledge2Setup:
 makeLedge2:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int
+	li $a1, 26 # set max value of random int
 	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1000 #add 1000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 1024 #add 1000 so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
@@ -224,10 +226,11 @@ ledge3Setup:
 makeLedge3:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int to 700
+	li $a1, 26 # set max value of random int to 700
 	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2000 #add 2000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 2048 #add 2000 so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -236,10 +239,11 @@ makeLedge3:
 makeLedgesSetup:
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int
+	li $a1, 25 # set max value of random int
 	syscall
+	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 3000 #add 3000 so the ledge is near bottom of screen
+	addi $a0, $a0, 2816 #add so the ledge is near bottom of screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge1StartAddress
 	sw $t7, charBottomAddress
@@ -248,19 +252,21 @@ makeLedgesSetup:
 	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int
+	li $a1, 25 # set max value of random int
 	syscall
+	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1000 #add 1000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 1024 #add 1000 so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 24 # set max value of random int to 700
+	li $a1, 25 # set max value of random int
 	syscall
+	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2000 #add 2000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -379,6 +385,9 @@ checkLanding:
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	
+	addi $t7, $t3, 128
+	bgt $t7, $s7, exit #if charStartAddress+128 is more than max address then we lose
+	
 	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
 	j afterCheckLanding #return to jumpDown
 
@@ -437,6 +446,6 @@ CentralProcessing:
 	#Sleep.
 	#Go back to Step #1
 
-Exit:
+exit:
 	li $v0, 10 # terminate the program gracefully
 	syscall
