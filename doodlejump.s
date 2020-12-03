@@ -34,6 +34,7 @@
 .data
 	displayAddress:	.word	0x10008000
 	charStartAddress: .word 0
+	charBottomAddress: .word 0 # store the address of bottom address doodle should jump till
 	ledge1StartAddress: .word 4016
 	ledge2StartAddress: .word 0
 	ledge3StartAddress: .word 0
@@ -44,10 +45,15 @@
 	li $s2, 0xbdb76b	# $s2 stores the dark green colour code
 	li $s3, 0x000000	# $s3 stores the black colour code
 	li $s4, 0xb0e0e6       # $s4 stores the aqua colour code
-	
+	lw $s5, charBottomAddress # $s5 stores the default bottom address 
 main:
-	add $t7, $s0, 4164 #3908
+	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
+	
+	li $t7, 4096
+	add $t7, $t7, $s0
+	sw $t7, charBottomAddress
+	lw $s5, charBottomAddress #store the default bottom address
 	
 	jal makeBoardSetup
 
@@ -97,13 +103,12 @@ returnUp:
 	jr $ra
 
 jumpUpSetup:
-	lw $t3, charStartAddress
-	addi $t3, $t3, -256
-	sw $t3, charStartAddress
-	sub $t4, $t3, $s0 # store the offset to displayAddress in t4
+	lw $t4, charStartAddress
+	addi $t4, $t4, -128 # subtract 256 to ensure its a valid address
+	sw $t4, charStartAddress
 	j jumpUp
 jumpUp:
-	bltz, $t4, jumpDownSetup 
+	blt, $t4, $s0, jumpDownSetup # branch if t4 goes below the minimum valid address
 	
 	jal makeBoardSetup
 	jal makeBoardBlue
@@ -111,15 +116,14 @@ jumpUp:
 	
 	jal makeCharacter
 	
-	addi $t4, $t4, -256
-	addi $t3, $t3, -256
-	sw $t3, charStartAddress
+	addi $t4, $t4, -128
+	sw $t4, charStartAddress
 
 	lw $t6, 0xffff0000 # load value for keystroke into t7 
 	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
 NoInput1:	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 50
 	syscall
 	
 	j jumpUp
@@ -128,18 +132,17 @@ checkInput1:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 50
 	syscall
 	
 	j jumpUp
 
 jumpDownSetup:
-	#li $t4 3908
-	li $t2 4096
-	lw $t3, charStartAddress
-	addi $t3, $t3, 256 #add 256 since the exit condition of jump up made charStartAddress invalid address
-	sw $t3, charStartAddress
-	sub $t4, $t3, $s0 # store the offset to displayAddress in t4
+	lw $t2, charBottomAddress # minimum point the doodle should jump down to
+	
+	lw $t4, charStartAddress # load the start address of the doodle
+	addi $t4, $t4, 128 #add 256 since the exit condition of jump up made charStartAddress invalid address
+	sw $t4, charStartAddress
 
 	j jumpDown
 jumpDown:
@@ -150,16 +153,17 @@ jumpDown:
 	jal makeLedges
 	
 	jal makeCharacter
+	jal checkLanding
+	lw $t2, charBottomAddress # load charBottom address into t2 in case it changed
 	
-	addi $t4, $t4, 256
-	addi $t3, $t3, 256
-	sw $t3, charStartAddress
+	addi $t4, $t4, 128
+	sw $t4, charStartAddress
 	
 	lw $t6, 0xffff0000 # load value for keystroke into t7 
 	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
 NoInput2:	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 50
 	syscall
 	
 	j jumpDown
@@ -168,37 +172,33 @@ checkInput2:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 50
 	syscall
 
 	j jumpDown
 	
 makeLedgesSetup:
-	#li $v0, 42 # prepare syscall to produce random int
-	#li $a0, 0 
-	#li $a1, 1000 # set max value of random int to 1000
-	#syscall
-	
-	#sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
 	lw $t7, ledge1StartAddress # load 4036 into t7
 	add $t7, $s0, $t7 #add display address + 4036 
 	sw $t7, ledge1StartAddress 
 	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 1000 # set max value of random int to 1000
+	li $a1, 700 # set max value of random int to 700
 	syscall
 	
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 1000 #add 1000 so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
-	li $a1, 1000 # set max value of random int to 1000
+	li $a1, 700 # set max value of random int to 700
 	syscall
 	
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 1000 #add 1000 so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -206,34 +206,34 @@ makeLedges:
 	lw $t7, ledge1StartAddress #load the address into t7
 	
 	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, 4($t7) #put green in pixel in row 1
-	sw $s2, 8($t7) #put green in pixel in row 1
-	sw $s2, 12($t7) #put green in pixel in row 1
-	sw $s2, 16($t7) #put green in pixel in row 1
-	sw $s2, 20($t7) #put green in pixel in row 1
-	sw $s2, 24($t7) #put green in pixel in row 1
+	sw $s2, -4($t7) #put green in pixel in row 1
+	sw $s2, -8($t7) #put green in pixel in row 1
+	sw $s2, -12($t7) #put green in pixel in row 1
+	sw $s2, -16($t7) #put green in pixel in row 1
+	sw $s2, -20($t7) #put green in pixel in row 1
+	sw $s2, -24($t7) #put green in pixel in row 1
 	
 	
 	lw $t7, ledge2StartAddress #load the address into t7
 	
 	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, 4($t7) #put green in pixel in row 1
-	sw $s2, 8($t7) #put green in pixel in row 1
-	sw $s2, 12($t7) #put green in pixel in row 1
-	sw $s2, 16($t7) #put green in pixel in row 1
-	sw $s2, 20($t7) #put green in pixel in row 1
-	sw $s2, 24($t7) #put green in pixel in row 1
+	sw $s2, -4($t7) #put green in pixel in row 1
+	sw $s2, -8($t7) #put green in pixel in row 1
+	sw $s2, -12($t7) #put green in pixel in row 1
+	sw $s2, -16($t7) #put green in pixel in row 1
+	sw $s2, -20($t7) #put green in pixel in row 1
+	sw $s2, -24($t7) #put green in pixel in row 1
 	
 	
 	lw $t7, ledge3StartAddress #load the address into t7
 	
 	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, 4($t7) #put green in pixel in row 1
-	sw $s2, 8($t7) #put green in pixel in row 1
-	sw $s2, 12($t7) #put green in pixel in row 1
-	sw $s2, 16($t7) #put green in pixel in row 1
-	sw $s2, 20($t7) #put green in pixel in row 1
-	sw $s2, 24($t7) #put green in pixel in row 1
+	sw $s2, -4($t7) #put green in pixel in row 1
+	sw $s2, -8($t7) #put green in pixel in row 1
+	sw $s2, -12($t7) #put green in pixel in row 1
+	sw $s2, -16($t7) #put green in pixel in row 1
+	sw $s2, -20($t7) #put green in pixel in row 1
+	sw $s2, -24($t7) #put green in pixel in row 1
 	
 	jr $ra
 	
@@ -246,17 +246,92 @@ afterRespond:
 	
 respondToJ:
 	addi $t4, $t4, -4
-	addi $t3, $t3, -4
-	sw $t3, charStartAddress
+	sw $t4, charStartAddress
 	
 	j afterRespond
 	
 respondToK:
 	addi $t4, $t4, 4
-	addi $t3, $t3, 4
-	sw $t3, charStartAddress
+	sw $t4, charStartAddress
 	
 	j afterRespond
+	
+checkLanding:
+	lw $t3, charStartAddress
+	lw $t5, ledge1StartAddress
+	lw $t6, ledge2StartAddress
+	lw $t7, ledge3StartAddress
+	
+	addi $t0, $t3, 152
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase	
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	addi $t0, $t0, -4
+	beq $t0, $t7, ledge3NewBase
+	beq $t0, $t6, ledge2NewBase
+	beq $t0, $t5, ledge1NewBase
+	
+	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
+	jr $ra #return to jumpDown
+
+ledge3NewBase:
+	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
+	jr $ra #return to jumpDown
+	
+ledge2NewBase:
+	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
+	jr $ra #return to jumpDown
+
+ledge1NewBase:
+	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
+	jr $ra #return to jumpDown
+		
 		
 CentralProcessing:
 	#Check for keyboard input
