@@ -67,7 +67,15 @@ main:
 	jal makeLedgesSetup
 	
 	jal makeLedges
-	
+waitForS:
+	lw $t6, 0xffff0000 # load value for if keystroke into t6 
+	beq $t6, 1, checkS # if there is a keystroke, branch to check s
+	j waitForS
+checkS:
+	lw $t7, 0xffff0004 
+	beq $t7, 0x73, startGame # if keystroke was s, then start the game
+	j waitForS # if keystroke wasn't s, keep waiting
+startGame:
 	jal jumpUpSetup
 
 makeBoardSetup:
@@ -128,7 +136,7 @@ jumpUp:
 	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
 NoInput1:	
 	li $v0, 32
-	li $a0, 50
+	li $a0, 20
 	syscall
 	
 	j jumpUp
@@ -137,7 +145,7 @@ checkInput1:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 50
+	li $a0, 20
 	syscall
 	
 	j jumpUp
@@ -386,7 +394,7 @@ checkLanding:
 	beq $t7, $t2, ledgeNewBase
 	
 	addi $t7, $t3, 128
-	bgt $t7, $s7, exit #if charStartAddress+128 is more than max address then we lose
+	bgt $t7, $s7, waitForR #if charStartAddress+128 is more than max address then we lose
 	
 	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
 	j afterCheckLanding #return to jumpDown
@@ -427,16 +435,34 @@ doneScrolling:
 	jal ledge3Setup
 	
 	j afterCheckLanding #return to jumpDown
-	
-#ledge2NewBase:
-#	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
-#	j afterCheckLanding #return to jumpDown
 
-#ledge1NewBase:
-#	sw $t3, charBottomAddress #since we've landed, make current charStartAddress the new bottom
-#	j afterCheckLanding #return to jumpDown
-		
-		
+waitForR:
+	lw $t6, 0xffff0000 # load value for if keystroke into t6 
+	beq $t6, 1, checkR # if there is a keystroke, branch to check r
+	j waitForR
+checkR:
+	lw $t7, 0xffff0004 
+	beq $t7, 0x72, restartGame # if keystroke was r, then restart the game
+	j waitForR # if keystroke wasn't r, keep waiting
+restartGame:	
+	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
+	sw $t7, charStartAddress # store the value of t7 into charStartAddress
+	
+	li $t7, 4096
+	add $t7, $t7, $s0
+	sw $t7, charBottomAddress
+	lw $s5, charBottomAddress #store the default bottom address
+	
+	jal makeBoardSetup
+
+	jal makeBoardBlue
+	
+	jal makeLedgesSetup
+	
+	jal makeLedges
+	
+	jal startGame
+
 CentralProcessing:
 	#Check for keyboard input
 	#Update the location of the Doodler accordingly
@@ -445,7 +471,6 @@ CentralProcessing:
 	#Redraw the screen
 	#Sleep.
 	#Go back to Step #1
-
 exit:
 	li $v0, 10 # terminate the program gracefully
 	syscall
