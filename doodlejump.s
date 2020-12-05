@@ -116,8 +116,8 @@ makeCharacter:
 
 jumpUpSetup:
 	lw $t4, charStartAddress
-	addi $t4, $t4, -128 # subtract 256 to ensure its a valid address
-	addi $t3, $t4, -2400
+	addi $t4, $t4, -128 # subtract to ensure its a valid address
+	addi $t3, $t4, -2000 #represents the amount of jump in bytes
 	sw $t4, charStartAddress
 	j jumpUp
 jumpUp:
@@ -126,17 +126,17 @@ jumpUp:
 	jal makeBoardSetup
 	jal makeBoardBlue
 	jal makeLedges
-	
 	jal makeCharacter
-	
+	jal scroll
+afterScroll:
 	addi $t4, $t4, -128
 	sw $t4, charStartAddress
 
-	lw $t6, 0xffff0000 # load value for keystroke into t7 
+	lw $t6, 0xffff0000 # load value for keystroke
 	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
 NoInput1:	
 	li $v0, 32
-	li $a0, 20
+	li $a0, 40
 	syscall
 	
 	j jumpUp
@@ -145,7 +145,7 @@ checkInput1:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 20
+	li $a0, 40
 	syscall
 	
 	j jumpUp
@@ -178,7 +178,7 @@ afterCheckLanding:
 	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
 NoInput2:	
 	li $v0, 32
-	li $a0, 50
+	li $a0, 100
 	syscall
 	
 	j jumpDown
@@ -187,7 +187,7 @@ checkInput2:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 50
+	li $a0, 100
 	syscall
 
 	j jumpDown
@@ -203,7 +203,7 @@ makeLedge1:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2816 #add soo the ledge is near bottom of screen
+	addi $a0, $a0, 2560 #add soo the ledge is near bottom of screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge1StartAddress
 	
@@ -221,7 +221,7 @@ makeLedge2:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1024 #add 1000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 1792 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
@@ -238,7 +238,7 @@ makeLedge3:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2048 #add 2000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 1152 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -251,7 +251,7 @@ makeLedgesSetup:
 	syscall
 	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2816 #add so the ledge is near bottom of screen
+	addi $a0, $a0, 3584 #add so the ledge is near bottom of screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge1StartAddress
 	sw $t7, charBottomAddress
@@ -264,7 +264,7 @@ makeLedgesSetup:
 	syscall
 	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1024 #add 1000 so the ledge isnt too high on the screen
+	addi $a0, $a0, 2560 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
@@ -274,7 +274,7 @@ makeLedgesSetup:
 	syscall
 	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
+	addi $a0, $a0, 1792 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -314,25 +314,25 @@ makeLedges:
 	jr $ra
 	
 checkJK:
-	lw $t7, 0xffff0004 
-	beq $t7, 0x6a, respondToJ 
-	beq $t7, 0x6b, respondToK
+	lw $t7, 0xffff0004 #load keystroke value into t7
+	beq $t7, 0x6a, respondToJ #check if it is j
+	beq $t7, 0x6b, respondToK #check if it is k
 afterRespond:
-	jr $ra
+	jr $ra #go back to jumping
 	
 respondToJ:
-	addi $t4, $t4, -4
-	sw $t4, charStartAddress
+	addi $t4, $t4, -4 #move left 1 pixel
+	sw $t4, charStartAddress #save the new address for char
 	
 	j afterRespond
 	
 respondToK:
-	addi $t4, $t4, 4
-	sw $t4, charStartAddress
+	addi $t4, $t4, 4 #move right one pixel
+	sw $t4, charStartAddress #save the new address for char
 	
 	j afterRespond
 	
-checkLanding:
+checkLanding: # load each of the ledges addresses, and check if the doodle has landed on any part of them
 	lw $t0, ledge1StartAddress
 	lw $t1, ledge2StartAddress
 	lw $t2, ledge3StartAddress
@@ -400,41 +400,37 @@ checkLanding:
 	j afterCheckLanding #return to jumpDown
 
 ledgeNewBase:
-	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
-	
-	addi $t3, $t3, 128
+	addi $t3, $t3, 128 #add 128 because it will be subtracted in jump up setup
 	sw $t3, charStartAddress
-	bge $t3, $s6, doneScrolling #s6 is the max address in first row. $t3 cant go below first row
+	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
+	jal jumpUpSetup
+
+scroll:
+	lw $t7, charBottomAddress	
+	addi $t7, $t7, 128
+	bge $t7, $s6, doneScrolling #s6 is the max address in first row. $t3 cant go below first row
+	sw $t7, charBottomAddress
 	
+	lw $t0, ledge1StartAddress
 	addi $t0, $t0, 128
 	sw $t0, ledge1StartAddress
 	
+	lw $t1, ledge2StartAddress
 	addi $t1, $t1, 128
 	sw $t1, ledge2StartAddress
 
+	lw $t2, ledge3StartAddress
 	addi $t2, $t2, 128
 	sw $t2, ledge3StartAddress
 	
-	jal makeBoardSetup
-	jal makeBoardBlue
-	jal makeLedges
-	
-	jal makeCharacter
-	
-	li $v0, 32
-	li $a0, 20
-	syscall
-	
-	j ledgeNewBase
+	addi $t3, $t3, 128 #adjust the max jump height since we scroll down
+
 doneScrolling:
-	addi $t3, $t3, -128
-	sw $t3, charStartAddress
-	
 	jal ledge1Setup
 	jal ledge2Setup
 	jal ledge3Setup
-	
-	j afterCheckLanding #return to jumpDown
+
+	j afterScroll
 
 waitForR:
 	lw $t6, 0xffff0000 # load value for if keystroke into t6 
@@ -462,6 +458,66 @@ restartGame:
 	jal makeLedges
 	
 	jal startGame
+	
+makeStartScreen:
+	# make top of P	
+	sw $s1, 24($s0) #put golden in pixel in row 1
+	sw $s1, 28($s0) #put golden in pixel in row 1
+	sw $s1, 32($s0) #put golden in pixel in row 1
+	
+	# make vertical part of P
+	sw $s1, 152($s0) #put golden in pixel in row 1
+	sw $s1, 280($s0) #put golden in pixel in row 1
+	sw $s1, 408($s0) #put golden in pixel in row 1
+	sw $s1, 536($s0) #put golden in pixel in row 1
+	
+	# make smaller vertical part of P
+	sw $s1, 160($s0) #put golden in pixel in row 1
+	sw $s1, 288($s0) #put golden in pixel in row 1
+	
+	# make middle part of P
+	sw $s1, 284($s0) #put golden in pixel in row 11
+	
+	# make top of R
+	sw $s1, 40($s0) #put golden in pixel in row 1
+	sw $s1, 44($s0) #put golden in pixel in row 1
+	sw $s1, 48($s0) #put golden in pixel in row 1
+	
+	# make vertical part of R
+	sw $s1, 168($s0) #put golden in pixel in row 1
+	sw $s1, 296($s0) #put golden in pixel in row 1
+	sw $s1, 424($s0) #put golden in pixel in row 1
+	sw $s1, 552($s0) #put golden in pixel in row 1
+	
+	# make smaller vertical part of R
+	sw $s1, 176($s0) #put golden in pixel in row 1
+	sw $s1, 304($s0) #put golden in pixel in row 1
+	sw $s1, 560($s0) #put golden in pixel in row 1
+	
+	# make slant part of R
+	sw $s1, 300($s0) #put golden in pixel in row 11
+	sw $s1, 428($s0) #put golden in pixel in row 1
+	
+	# make top of E
+	sw $s1, 56($s0) #put golden in pixel in row 1
+	sw $s1, 60($s0) #put golden in pixel in row 1
+	sw $s1, 64($s0) #put golden in pixel in row 1
+	
+	# make vertical part of E
+	sw $s1, 184($s0) #put golden in pixel in row 1
+	sw $s1, 312($s0) #put golden in pixel in row 1
+	sw $s1, 440($s0) #put golden in pixel in row 1
+	sw $s1, 568($s0) #put golden in pixel in row 1
+	
+	# make smaller vertical part of R
+	sw $s1, 176($s0) #put golden in pixel in row 1
+	sw $s1, 304($s0) #put golden in pixel in row 1
+	sw $s1, 560($s0) #put golden in pixel in row 1
+	
+	# make slant part of R
+	sw $s1, 316($s0) #put golden in pixel in row 11
+	sw $s1, 320($s0) #put golden in pixel in row 1
+	
 
 CentralProcessing:
 	#Check for keyboard input
