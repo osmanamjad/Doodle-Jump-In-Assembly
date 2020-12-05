@@ -49,10 +49,19 @@
 	li $s6, 3968 # $s6 stores the maximum display address of the character (1 row  above last row)
 	li $s7, 4096 # $s7 stores maximum display address for board.
 main:
-	j makeStartScreen
 	add $s6, $s0, $s6 # never changed
 	add $s7, $s0, $s7 # never changed
+	j makeStartScreen
+waitForS:
+	lw $t6, 0xffff0000 # load value for if keystroke into t6 
+	beq $t6, 1, checkS # if there is a keystroke, branch to check s
+	j waitForS #if no keystroke, keep waiting
+checkS:
+	lw $t7, 0xffff0004 # load the keystorke value
+	beq $t7, 0x73, startGame # if keystroke was s, then start the game
+	j waitForS # if keystroke wasn't s, keep waiting
 	
+startGame:
 	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
 	
@@ -68,15 +77,7 @@ main:
 	jal makeLedgesSetup
 	
 	jal makeLedges
-waitForS:
-	lw $t6, 0xffff0000 # load value for if keystroke into t6 
-	beq $t6, 1, checkS # if there is a keystroke, branch to check s
-	j waitForS
-checkS:
-	lw $t7, 0xffff0004 
-	beq $t7, 0x73, startGame # if keystroke was s, then start the game
-	j waitForS # if keystroke wasn't s, keep waiting
-startGame:
+	
 	jal jumpUpSetup
 
 makeBoardSetup:
@@ -442,65 +443,118 @@ checkR:
 	beq $t7, 0x72, restartGame # if keystroke was r, then restart the game
 	j waitForR # if keystroke wasn't r, keep waiting
 restartGame:	
-	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
-	sw $t7, charStartAddress # store the value of t7 into charStartAddress
-	
-	li $t7, 4096
-	add $t7, $t7, $s0
-	sw $t7, charBottomAddress
-	lw $s5, charBottomAddress #store the default bottom address
-	
-	jal makeBoardSetup
-
-	jal makeBoardBlue
-	
-	jal makeLedgesSetup
-	
-	jal makeLedges
-	
-	jal startGame
+	j startGame
 	
 makeStartScreen:
 	add $a0, $zero, $s0
 	addi $a0, $a0, 24 #put offset into a0
-	add $a1, $zero, $s1 #put desired colour into a1 
+	add $a1, $zero, $s4 #put desired colour into a1 
 	jal makeP
 	
 	add $a0, $zero, $s0
 	addi $a0, $a0, 40 #put offset into a0
-	add $a1, $zero, $s1 #put desired colour into a1 
+	add $a1, $zero, $s4 #put desired colour into a1 
 	jal makeR
 	
 	add $a0, $zero, $s0
 	addi $a0, $a0, 56 #put offset into a0
-	add $a1, $zero, $s1 #put desired colour into a1 
+	add $a1, $zero, $s4 #put desired colour into a1 
 	jal makeE
 	
 	add $a0, $zero, $s0
 	addi $a0, $a0, 72 #put offset into a0
-	add $a1, $zero, $s1 #put desired colour into a1 
+	add $a1, $zero, $s4 #put desired colour into a1 
 	jal makeS
 	
 	add $a0, $zero, $s0
 	addi $a0, $a0, 88 #put offset into a0
-	add $a1, $zero, $s1 #put desired colour into a1 
+	add $a1, $zero, $s4 #put desired colour into a1 
 	jal makeS
 	
-	j exit
-	#jal makeE
-	#jal makeS
-	#jal makeS
+	add $a0, $zero, $s0
+	addi $a0, $a0, 824 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeS
 	
-	#jal makeS
+	add $a0, $zero, $s0
+	addi $a0, $a0, 1584 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeT
 	
-	#jal makeT
-	#jal makeO
+	add $a0, $zero, $s0
+	addi $a0, $a0, 1600 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeO
 	
-	#jal makeS
-	#jal makeT
-	#jal makeA
-	#jal makeR
-	#jal makeT
+	add $a0, $zero, $s0
+	addi $a0, $a0, 2328 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeS
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 2344 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeT
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 2360 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeA
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 2376 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeR
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 2392 #put offset into a0
+	add $a1, $zero, $s4 #put desired colour into a1 
+	jal makeT
+	
+	j waitForS
+makeA:	
+	# make left vertical part of A
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle parts of A
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make right vertical part of A
+	sw $a1, 8($a0) #put colour in pixel
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+makeO:	
+	# make top of O
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make left vertical part of 0
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make bottom part of O
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	# make right vertical part of H
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+	
 makeP:	
 	# make top of P	
 	sw $a1, 0($a0) #put colour in pixel
@@ -591,6 +645,75 @@ makeS:
 	
 	jr $ra # return to make word call
 	
+makeH:	
+	# make left vertical part of H
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle part of H
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make right vertical part of H
+	sw $a1, 8($a0) #put colour in pixel
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+	
+makeT:	
+	# make top of T
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make vertical part of T
+	sw $a1, 132($a0) #put colour in pixel
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 388($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+	
+makeY:	
+	# make top of Y
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 136($a0) #put colour in pixel
+	
+	# make vertical part of Y
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 388($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+	
+makeZ:	
+	# make top of Z
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make right side of z
+	sw $a1, 136($a0) #put colour in pixel
+	
+	# make left side of Z
+	sw $a1, 384($a0) #put colour in pixel
+	
+	# make middle part of P
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make bottom part of Z
+	sw $a1, 512($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
 
 CentralProcessing:
 	#Check for keyboard input
