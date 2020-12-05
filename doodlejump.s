@@ -49,6 +49,7 @@
 	li $s6, 3968 # $s6 stores the maximum display address of the character (1 row  above last row)
 	li $s7, 4096 # $s7 stores maximum display address for board.
 main:
+	j makeStartScreen
 	add $s6, $s0, $s6 # never changed
 	add $s7, $s0, $s7 # never changed
 	
@@ -460,63 +461,135 @@ restartGame:
 	jal startGame
 	
 makeStartScreen:
+	add $a0, $zero, $s0
+	addi $a0, $a0, 24 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeP
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 40 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeR
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 56 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeE
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 72 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeS
+	
+	add $a0, $zero, $s0
+	addi $a0, $a0, 88 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeS
+	
+	j exit
+	#jal makeE
+	#jal makeS
+	#jal makeS
+	
+	#jal makeS
+	
+	#jal makeT
+	#jal makeO
+	
+	#jal makeS
+	#jal makeT
+	#jal makeA
+	#jal makeR
+	#jal makeT
+makeP:	
 	# make top of P	
-	sw $s1, 24($s0) #put golden in pixel in row 1
-	sw $s1, 28($s0) #put golden in pixel in row 1
-	sw $s1, 32($s0) #put golden in pixel in row 1
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
 	
 	# make vertical part of P
-	sw $s1, 152($s0) #put golden in pixel in row 1
-	sw $s1, 280($s0) #put golden in pixel in row 1
-	sw $s1, 408($s0) #put golden in pixel in row 1
-	sw $s1, 536($s0) #put golden in pixel in row 1
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
 	
 	# make smaller vertical part of P
-	sw $s1, 160($s0) #put golden in pixel in row 1
-	sw $s1, 288($s0) #put golden in pixel in row 1
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
 	
 	# make middle part of P
-	sw $s1, 284($s0) #put golden in pixel in row 11
+	sw $a1, 260($a0) #put colour in pixel
 	
+	jr $ra # return to make word call
+	
+makeR:	
 	# make top of R
-	sw $s1, 40($s0) #put golden in pixel in row 1
-	sw $s1, 44($s0) #put golden in pixel in row 1
-	sw $s1, 48($s0) #put golden in pixel in row 1
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
 	
 	# make vertical part of R
-	sw $s1, 168($s0) #put golden in pixel in row 1
-	sw $s1, 296($s0) #put golden in pixel in row 1
-	sw $s1, 424($s0) #put golden in pixel in row 1
-	sw $s1, 552($s0) #put golden in pixel in row 1
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
 	
 	# make smaller vertical part of R
-	sw $s1, 176($s0) #put golden in pixel in row 1
-	sw $s1, 304($s0) #put golden in pixel in row 1
-	sw $s1, 560($s0) #put golden in pixel in row 1
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
 	
 	# make slant part of R
-	sw $s1, 300($s0) #put golden in pixel in row 11
-	sw $s1, 428($s0) #put golden in pixel in row 1
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 388($a0) #put colour in pixel
 	
+	jr $ra # return to make word call
+	
+makeE:	
 	# make top of E
-	sw $s1, 56($s0) #put golden in pixel in row 1
-	sw $s1, 60($s0) #put golden in pixel in row 1
-	sw $s1, 64($s0) #put golden in pixel in row 1
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
 	
 	# make vertical part of E
-	sw $s1, 184($s0) #put golden in pixel in row 1
-	sw $s1, 312($s0) #put golden in pixel in row 1
-	sw $s1, 440($s0) #put golden in pixel in row 1
-	sw $s1, 568($s0) #put golden in pixel in row 1
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
 	
-	# make smaller vertical part of R
-	sw $s1, 176($s0) #put golden in pixel in row 1
-	sw $s1, 304($s0) #put golden in pixel in row 1
-	sw $s1, 560($s0) #put golden in pixel in row 1
+	# make middle part of E
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
 	
-	# make slant part of R
-	sw $s1, 316($s0) #put golden in pixel in row 11
-	sw $s1, 320($s0) #put golden in pixel in row 1
+	# make bottom part of E
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+	
+makeS:	
+	# make top of S
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make left vertical part of S
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	
+	# make middle part of S
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	
+	# make right vertical part of S
+	sw $a1, 392($a0) #put colour in pixel
+	
+	# make bottom part of S
+	sw $a1, 512($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
 	
 
 CentralProcessing:
