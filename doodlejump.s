@@ -38,6 +38,8 @@
 	ledge1StartAddress: .word 0
 	ledge2StartAddress: .word 0
 	ledge3StartAddress: .word 0
+	score: .word 0
+	currentLedge: .word 0
 	
 .text
 	lw $s0, displayAddress	# $s0 stores the base address for display
@@ -62,6 +64,10 @@ checkS:
 	j waitForS # if keystroke wasn't s, keep waiting
 	
 startGame:
+	li $t7, 0
+	sw $t7, score #ensure score is 0 when we start/restart a game
+	sw $t7, currentLedge #ensure current ledge is reset to 0 on restart
+	
 	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
 	
@@ -129,6 +135,7 @@ jumpUp:
 	jal makeBoardBlue
 	jal makeLedges
 	jal makeCharacter
+	jal displayScore
 	jal scroll
 afterScroll:
 	addi $t4, $t4, -128
@@ -166,8 +173,8 @@ jumpDown:
 	jal makeBoardSetup
 	jal makeBoardBlue
 	jal makeLedges
-	
 	jal makeCharacter
+	jal displayScore
 	jal checkLanding
 afterCheckLanding:
 	lw $t3, charBottomAddress # load charBottom address into t3 in case it changed
@@ -402,10 +409,43 @@ checkLanding: # load each of the ledges addresses, and check if the doodle has l
 	j afterCheckLanding #return to jumpDown
 
 ledgeNewBase:
+	beq $t7, $t0, ledge1Current
+	beq $t7, $t1, ledge2Current
+	beq $t7, $t2, ledge3Current
+
+afterChangeCurrentLedge:
 	addi $t3, $t3, 128 #add 128 because it will be subtracted in jump up setup
 	sw $t3, charStartAddress
 	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
 	jal jumpUpSetup
+	
+	
+ledge1Current:
+	li $t7, 1
+	lw $t6, currentLedge # load previous current ledge
+	sw $t7, currentLedge # update current ledge
+	bne $t6, 1, updateScore #if the landed ledge is different from current ledge, update score
+	j afterChangeCurrentLedge
+
+ledge2Current:
+	li $t7, 2
+	lw $t6, currentLedge # load previous current ledge
+	sw $t7, currentLedge # update current ledge
+	bne $t6, 2, updateScore #if the landed ledge is different from current ledge, update score
+	j afterChangeCurrentLedge
+
+ledge3Current:
+	li $t7, 3
+	lw $t6, currentLedge # load previous current ledge
+	sw $t7, currentLedge # update current ledge
+	bne $t6, 3, updateScore #if the landed ledge is different from current ledge, update score
+	j afterChangeCurrentLedge
+	
+updateScore:
+	lw $t7, score
+	addi $t7, $t7, 1 #update score since we landed on a ledge
+	sw $t7, score
+	j afterChangeCurrentLedge
 
 scroll:
 	lw $t7, charBottomAddress	
@@ -600,6 +640,255 @@ makeStartScreen:
 	jal makeT
 	
 	j waitForS
+	
+displayScore:
+	lw $t7, score
+	li $t6, 10
+	li $t5, 112 # initial offset
+divide:
+	div $t7, $t6
+	mflo $t7 #put quotient in
+	mfhi $t0 #put remainder in	
+	
+	add $a0, $s0, $t5 #load offset in
+	add $a1, $zero, $s1 #load colour in
+	
+	beq, $t0, 0, make0
+	beq, $t0, 1, make1
+	beq, $t0, 2, make2
+	beq, $t0, 3, make3
+	beq, $t0, 4, make4
+	beq, $t0, 5, make5
+	beq, $t0, 6, make6
+	beq, $t0, 7, make7
+	beq, $t0, 8, make8
+	beq, $t0, 9, make9
+	
+afterPrintNumber:
+	beqz, $t7, backToJump
+	
+	addi $t5, $t5, -16 #decrement offset so next number can be printed
+	
+	j divide
+
+backToJump:
+	jr $ra
+
+make0:	
+	# make top of 0
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make left vertical part of 0
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make bottom part of 0
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	# make right vertical part of 0
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make1:	
+	# make top of 1
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	
+	# make vertical part of 1
+	sw $a1, 132($a0) #put colour in pixel
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 388($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+
+make2:	
+	# make top of 2
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make right vertical part of 2
+	sw $a1, 136($a0) #put colour in pixel
+	
+	# make middle part of 2
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	
+	# make left vertical part of 2
+	sw $a1, 384($a0) #put colour in pixel
+	
+	# make bottom part of 2
+	sw $a1, 512($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make3:	
+	# make top of 3
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make vertical part of 3
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	# make middle part of 3
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	
+	# make bottom part of 3
+	sw $a1, 512($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make4:	
+	# make left vertical part of 4
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	
+	# make middle part of 4
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make right vertical part of 4
+	sw $a1, 8($a0) #put colour in pixel
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make5:	
+	# make top of 5
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make left vertical part of 5
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	
+	# make middle part of 5
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	
+	# make right vertical part of 5
+	sw $a1, 392($a0) #put colour in pixel
+	
+	# make bottom part of 5
+	sw $a1, 512($a0) #put colour in pixel
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make6:
+	# make top of 6
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make vertical part of 6
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle part of 6
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	
+	# make bottom part of 6
+	sw $a1, 516($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make7:	
+	# make top of 7
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	sw $a1, 128($a0) #put colour in pixel
+	
+	# make vertical part of 7
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+
+make8:	
+	# make top of 8
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make right vertical part of 8
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	# make left vertical part of 8
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle part of 8
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make bottom part of 8
+	sw $a1, 516($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
+make9:	
+	# make top of 9
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make right vertical part of 9
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	# make left vertical part of 9
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle part of 9
+	sw $a1, 260($a0) #put colour in pixel
+	
+	# make bottom part of 9
+	sw $a1, 516($a0) #put colour in pixel
+	
+	j afterPrintNumber #go back after printing
+	
 makeA:	
 	# make left vertical part of A
 	sw $a1, 0($a0) #put colour in pixel
@@ -617,6 +906,28 @@ makeA:
 	sw $a1, 136($a0) #put colour in pixel
 	sw $a1, 264($a0) #put colour in pixel
 	sw $a1, 392($a0) #put colour in pixel
+	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+
+makeE:	
+	# make top of E
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	sw $a1, 8($a0) #put colour in pixel
+	
+	# make vertical part of E
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make middle part of E
+	sw $a1, 260($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	
+	# make bottom part of E
+	sw $a1, 516($a0) #put colour in pixel
 	sw $a1, 520($a0) #put colour in pixel
 	
 	jr $ra # return to make word call
@@ -747,28 +1058,6 @@ makeR:
 	# make slant part of R
 	sw $a1, 260($a0) #put colour in pixel
 	sw $a1, 388($a0) #put colour in pixel
-	
-	jr $ra # return to make word call
-	
-makeE:	
-	# make top of E
-	sw $a1, 0($a0) #put colour in pixel
-	sw $a1, 4($a0) #put colour in pixel
-	sw $a1, 8($a0) #put colour in pixel
-	
-	# make vertical part of E
-	sw $a1, 128($a0) #put colour in pixel
-	sw $a1, 256($a0) #put colour in pixel
-	sw $a1, 384($a0) #put colour in pixel
-	sw $a1, 512($a0) #put colour in pixel
-	
-	# make middle part of E
-	sw $a1, 260($a0) #put colour in pixel
-	sw $a1, 264($a0) #put colour in pixel
-	
-	# make bottom part of E
-	sw $a1, 516($a0) #put colour in pixel
-	sw $a1, 520($a0) #put colour in pixel
 	
 	jr $ra # return to make word call
 	
