@@ -27,7 +27,8 @@
 #
 # Any additional information that the TA needs to know:
 # - M41: Score counter that increases each time the doodle moves from one ledge to another
-# - M51: fancier graphics including start/restart screen, giraffe doodle, and ledges with legs. 
+# - M42: Dynamic increase in speed each time a user's score goes up. game gets faster/harder.
+# - M51: fancier graphics including start/gameover/restart screen, giraffe doodle, and ledges with legs. 
 #####################################################################
 
 .data
@@ -39,6 +40,7 @@
 	ledge3StartAddress: .word 0
 	score: .word 0
 	currentLedge: .word 0
+	sleep: .word 200
 	
 .text
 	lw $s0, displayAddress	# $s0 stores the base address for display
@@ -154,7 +156,7 @@ afterScroll:
 	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
 NoInput1:	
 	li $v0, 32
-	li $a0, 40
+	lw $a0, sleep
 	syscall
 	
 	j jumpUp
@@ -163,7 +165,7 @@ checkInput1:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 40
+	lw $a0, sleep
 	syscall
 	
 	j jumpUp
@@ -196,7 +198,7 @@ afterCheckLanding:
 	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
 NoInput2:	
 	li $v0, 32
-	li $a0, 100
+	lw $a0, sleep
 	syscall
 	
 	j jumpDown
@@ -205,7 +207,7 @@ checkInput2:
 	jal checkJK
 	
 	li $v0, 32
-	li $a0, 100
+	lw $a0, sleep
 	syscall
 
 	j jumpDown
@@ -439,27 +441,32 @@ ledge1Current:
 	li $t7, 1
 	lw $t6, currentLedge # load previous current ledge
 	sw $t7, currentLedge # update current ledge
-	bne $t6, 1, updateScore #if the landed ledge is different from current ledge, update score
+	bne $t6, 1, updateScoreAndSleep #if the landed ledge is different from current ledge, update score
 	j afterChangeCurrentLedge
 
 ledge2Current:
 	li $t7, 2
 	lw $t6, currentLedge # load previous current ledge
 	sw $t7, currentLedge # update current ledge
-	bne $t6, 2, updateScore #if the landed ledge is different from current ledge, update score
+	bne $t6, 2, updateScoreAndSleep #if the landed ledge is different from current ledge, update score
 	j afterChangeCurrentLedge
 
 ledge3Current:
 	li $t7, 3
 	lw $t6, currentLedge # load previous current ledge
 	sw $t7, currentLedge # update current ledge
-	bne $t6, 3, updateScore #if the landed ledge is different from current ledge, update score
+	bne $t6, 3, updateScoreAndSleep #if the landed ledge is different from current ledge, update score
 	j afterChangeCurrentLedge
 	
-updateScore:
+updateScoreAndSleep:
 	lw $t7, score
 	addi $t7, $t7, 1 #update score since we landed on a ledge
 	sw $t7, score
+	
+	lw $t7, sleep
+	addi $t7, $t7, -5 #update score since we landed on a ledge
+	blt $t7, 30, afterChangeCurrentLedge #if sleep is already at 30, dont let it go more down
+	sw $t7, sleep
 	j afterChangeCurrentLedge
 
 scroll:
