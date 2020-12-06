@@ -112,23 +112,22 @@ makeCharacter:
 	sw $s3, -16($t7) #put colour in pixel in row 1
 	
 	sw $s1, -128($t7) #put golden in pixel in row 2
-	sw $s1, -132($t7) #put golden in pixel in row 2
+	sw $s3, -132($t7) #put golden in pixel in row 2
 	sw $s1, -136($t7) #put black in pixel in row 2
-	sw $s1, -140($t7) #put golden in pixel in row 2
+	sw $s3, -140($t7) #put golden in pixel in row 2
 	sw $s1, -144($t7) #put golden in pixel in row 2
 	
-	sw $s1, -256($t7) #put golden in pixel in row 3
+	sw $s3, -256($t7) #put golden in pixel in row 3
 	sw $s1, -260($t7) #put golden in pixel in row 3
-	sw $s1, -264($t7) #put golden in pixel in row 3
+	sw $s3, -264($t7) #put golden in pixel in row 3
 	sw $s1, -268($t7) #put golden in pixel in row 3
-	sw $s1, -272($t7) #put golden in pixel in row 3
+	sw $s3, -272($t7) #put golden in pixel in row 3
 	
-	sw $s1, -396($t7) #put golden in pixel in row 3
+	sw $s3, -396($t7) #put golden in pixel in row 3
 	sw $s1, -400($t7) #put golden in pixel in row 3
-	#sw $s1, -404($t7) #put golden in pixel in row 3
 	
 	sw $s1, -524($t7) #put golden in pixel in row 3
-	sw $s1, -528($t7) #put golden in pixel in row 3
+	sw $s3, -528($t7) #put golden in pixel in row 3
 	sw $s1, -532($t7) #put golden in pixel in row 3
 	
 	jr $ra
