@@ -13,8 +13,7 @@
 # - Base Address for Display: 0x10008000 ($gp)
 #
 # Which milestone is reached in this submission?
-# (See the assignment handout for descriptions of the milestones)
-# - Milestone 1/2/3/4/5 (choose the one the applies)
+# - Milestone 5
 #
 # Which approved additional features have been implemented?
 # (See the assignment handout for the list of additional features)
@@ -27,8 +26,8 @@
 # - (insert YouTube / MyMedia / other URL here). 
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
-#
+# - M41: Score counter that increases each time the doodle moves from one ledge to another
+# - M51: fancier graphics including start/restart screen, giraffe doodle, and ledges with legs. 
 #####################################################################
 
 .data
@@ -213,9 +212,9 @@ checkInput2:
 	
 ledge1Setup:
 	lw $t0, ledge1StartAddress
-	bgt $t0, $s7, makeLedge1 #if its start address is more than max display address, remake it
+	bgt $t0, $s7, setLedge1Address #if its start address is more than max display address, remake it
 	jr $ra
-makeLedge1:	
+setLedge1Address:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
 	li $a1, 26 # set max value of random int
@@ -230,10 +229,10 @@ makeLedge1:
 	
 ledge2Setup:
 	lw $t0, ledge2StartAddress
-	bgt $t0, $s7, makeLedge2 #if its start address is more than max display address, remake it
+	bgt $t0, $s7, setLedge2Address #if its start address is more than max display address, remake it
 	
 	jr $ra
-makeLedge2:	
+setLedge2Address:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
 	li $a1, 26 # set max value of random int
@@ -248,9 +247,9 @@ makeLedge2:
 	
 ledge3Setup:
 	lw $t0, ledge3StartAddress
-	bgt $t0, $s7, makeLedge3 #if its start address is more than max display address, remake it
+	bgt $t0, $s7, setLedge3Address #if its start address is more than max display address, remake it
 	jr $ra
-makeLedge3:	
+setLedge3Address:	
 	li $v0, 42 # prepare syscall to produce random int
 	li $a0, 0 
 	li $a1, 26 # set max value of random int to 700
@@ -307,6 +306,8 @@ makeLedges:
 	sw $s2, -16($t7) #put green in pixel in row 1
 	sw $s2, -20($t7) #put green in pixel in row 1
 	sw $s2, -24($t7) #put green in pixel in row 1
+	sw $s3, 104($t7) #put black in 
+	sw $s3, 128($t7) #put black in
 	
 	
 	lw $t7, ledge2StartAddress #load the address into t7
@@ -318,6 +319,8 @@ makeLedges:
 	sw $s2, -16($t7) #put green in pixel in row 1
 	sw $s2, -20($t7) #put green in pixel in row 1
 	sw $s2, -24($t7) #put green in pixel in row 1
+	sw $s3, 104($t7) #put black in 
+	sw $s3, 128($t7) #put black in
 	
 	
 	lw $t7, ledge3StartAddress #load the address into t7
@@ -329,6 +332,8 @@ makeLedges:
 	sw $s2, -16($t7) #put green in pixel in row 1
 	sw $s2, -20($t7) #put green in pixel in row 1
 	sw $s2, -24($t7) #put green in pixel in row 1
+	sw $s3, 104($t7) #put black in 
+	sw $s3, 128($t7) #put black in
 	
 	jr $ra
 	
