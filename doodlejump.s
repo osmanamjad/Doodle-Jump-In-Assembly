@@ -40,7 +40,7 @@
 	ledge3StartAddress: .word 0
 	score: .word 0
 	currentLedge: .word 0
-	sleep: .word 200
+	sleep: .word 130
 	
 .text
 	lw $s0, displayAddress	# $s0 stores the base address for display
@@ -68,6 +68,9 @@ startGame:
 	li $t7, 0
 	sw $t7, score #ensure score is 0 when we start/restart a game
 	sw $t7, currentLedge #ensure current ledge is reset to 0 on restart
+	
+	li $t7, 130 
+	sw $t7, sleep #ensure sleep is set back on restart
 	
 	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
@@ -464,7 +467,7 @@ updateScoreAndSleep:
 	sw $t7, score
 	
 	lw $t7, sleep
-	addi $t7, $t7, -5 #update score since we landed on a ledge
+	addi $t7, $t7, -4 #update score since we landed on a ledge
 	blt $t7, 30, afterChangeCurrentLedge #if sleep is already at 30, dont let it go more down
 	sw $t7, sleep
 	j afterChangeCurrentLedge
