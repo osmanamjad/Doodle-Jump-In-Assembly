@@ -466,12 +466,14 @@ updateScoreAndSleep:
 	addi $t7, $t7, 1 #update score since we landed on a ledge
 	sw $t7, score
 	
+	j checkScoreAndPrint
+afterCheckScore:	
 	lw $t7, sleep
 	addi $t7, $t7, -4 #update score since we landed on a ledge
 	blt $t7, 30, afterChangeCurrentLedge #if sleep is already at 30, dont let it go more down
 	sw $t7, sleep
 	j afterChangeCurrentLedge
-
+	
 scroll:
 	lw $t7, charBottomAddress	
 	addi $t7, $t7, 128
@@ -511,6 +513,100 @@ checkR:
 	j waitForR # if keystroke wasn't r, keep waiting
 restartGame:	
 	j startGame
+	
+checkScoreAndPrint:
+	lw $t7, score
+	beq $t7, 5, printGood
+	beq $t7, 10, printGreat
+	beq $t7, 15, printPoggers
+	j afterCheckScore	
+
+printGood:
+	addi $a0, $s0, 800 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeG
+	
+	addi $a0, $s0, 816 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeO
+	
+	addi $a0, $s0, 832 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeO
+	
+	addi $a0, $s0, 848 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeD
+	
+	#sleep for a moment so they see the notification
+	li $v0, 32
+	li $a0, 300
+	syscall
+	
+	j afterCheckScore
+	
+printGreat:
+	addi $a0, $s0, 792 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeG
+	
+	addi $a0, $s0, 808 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeR
+	
+	addi $a0, $s0, 824 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeE
+	
+	addi $a0, $s0, 840 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeA
+	
+	addi $a0, $s0, 856 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeT
+	
+	#sleep for a moment so they see the notification
+	li $v0, 32
+	li $a0, 300
+	syscall
+	
+	j afterCheckScore
+	
+printPoggers:	
+	addi $a0, $s0, 784 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeP
+	
+	addi $a0, $s0, 800 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeO
+	
+	addi $a0, $s0, 816 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeG
+	
+	addi $a0, $s0, 832 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeG
+	
+	addi $a0, $s0, 848 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeE
+	
+	addi $a0, $s0, 864 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeR
+	
+	addi $a0, $s0, 880 #put offset into a0
+	add $a1, $zero, $s1 #put desired colour into a1 
+	jal makeS
+	
+	#sleep for a moment so they see the notification
+	li $v0, 32
+	li $a0, 300
+	syscall
+	j afterCheckScore
 	
 makeGameOverScreen:
 	jal makeBoardSetup
@@ -932,6 +1028,28 @@ makeA:
 	sw $a1, 264($a0) #put colour in pixel
 	sw $a1, 392($a0) #put colour in pixel
 	sw $a1, 520($a0) #put colour in pixel
+	
+	jr $ra # return to make word call
+
+makeD:	
+	# make top of D
+	sw $a1, 0($a0) #put colour in pixel
+	sw $a1, 4($a0) #put colour in pixel
+	
+	# make left vertical part of D
+	sw $a1, 128($a0) #put colour in pixel
+	sw $a1, 256($a0) #put colour in pixel
+	sw $a1, 384($a0) #put colour in pixel
+	sw $a1, 512($a0) #put colour in pixel
+	
+	# make bottom part of D
+	sw $a1, 516($a0) #put colour in pixel
+
+	
+	# make right vertical part of D
+	sw $a1, 136($a0) #put colour in pixel
+	sw $a1, 264($a0) #put colour in pixel
+	sw $a1, 392($a0) #put colour in pixel
 	
 	jr $ra # return to make word call
 
