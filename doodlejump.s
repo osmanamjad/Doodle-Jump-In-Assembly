@@ -29,6 +29,7 @@
 # - M41: Score counter that increases each time the doodle moves from one ledge to another
 # - M42: Dynamic increase in speed each time a user's score goes up. game gets faster/harder.
 # - M51: fancier graphics including start/gameover/restart screen, giraffe doodle, and ledges with legs. 
+# - M52: dynamic on screen notifications. good at 5 points, great at 10 points, poggers at 15 points. 
 #####################################################################
 
 .data
