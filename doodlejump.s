@@ -213,6 +213,103 @@ createNormalLedge:
 	sw $s3, 128($t7)
 	
 	jr $ra
+
+# make doodle jump up, update its address, and scroll the screen
+jumpUp:
+	lw $t4, charStartAddress
+	addi $t4, $t4, -128 # subtract to ensure its a valid address (since the exit condtion of jumping down makes it invalid address)
+	sw $t4, charStartAddress
+	addi $t3, $t4, -2000 #represents the amount of jump to allow the doodle to do
+	j jumpingUp
+	
+jumpingUp:
+	blt, $t4, $t3, jumpDown # branch if t4 goes past max jumping capacity
+	
+	jal makeBoard
+	jal makeLedges
+	jal makeCharacter
+	jal displayScore
+	jal scroll
+	
+afterScroll:
+	addi $t4, $t4, -128 # move the character up one row
+	sw $t4, charStartAddress
+	
+	lw $t6, ledge5StartAddress
+	addi $t6, $t6, 4 # make the moving ledge move right
+	sw $t6, ledge5StartAddress
+
+	lw $t6, 0xffff0000 # load value for keystroke
+	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
+
+afterCheckInput1:	
+	li $v0, 32
+	lw $a0, sleep
+	syscall
+	j jumpingUp
+	
+checkInput1:
+	jal checkJK # check if keystroke was j or k
+	j afterCheckInput1
+	
+# make doodle jump down, update its address, and check its landing
+jumpDown:
+	lw $t3, charBottomAddress # minimum point the doodle should jump down to
+	lw $t4, charStartAddress # load the start address of the doodle
+	addi $t4, $t4, 128 #add 256 since the exit condition of jump up made charStartAddress invalid address
+	sw $t4, charStartAddress
+	j jumpingDown
+	
+jumpingDown:
+	bgt, $t4, $t3, jumpUp # branch once doodle is at its minimum point
+	
+	jal makeBoard
+	jal makeLedges
+	jal makeCharacter
+	jal displayScore
+	jal checkLanding
+	
+afterCheckLanding:
+	lw $t3, charBottomAddress # load charBottom address into t3 in case it changed
+	
+	lw $t4, charStartAddress # load back into t4 in case it changed
+	addi $t4, $t4, 128
+	sw $t4, charStartAddress
+	
+	lw $t6, ledge5StartAddress
+	addi $t6, $t6, -4 #make the ledge move left
+	sw $t6, ledge5StartAddress
+	
+	lw $t6, 0xffff0000 # load value for keystroke into t7 
+	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
+
+afterCheckInput2:	
+	li $v0, 32
+	lw $a0, sleep
+	syscall
+	j jumpingDown
+	
+checkInput2:
+	jal checkJK
+	j afterCheckInput2
+
+# checks if input is j or k (called from both jump up and jump down		
+checkJK:
+	lw $t7, 0xffff0004 #load keystroke value into t7
+	beq $t7, 0x6a, respondToJ #check if it is j
+	beq $t7, 0x6b, respondToK #check if it is k
+afterRespond:
+	jr $ra #go back to jumping
+	
+respondToJ:
+	addi $t4, $t4, -4 #move left 1 pixel
+	sw $t4, charStartAddress #save the new address for char
+	j afterRespond
+	
+respondToK:
+	addi $t4, $t4, 4 #move right one pixel
+	sw $t4, charStartAddress #save the new address for char
+	j afterRespond
 	
 #draw the character (cute giraffe)
 makeCharacter: 
@@ -245,192 +342,6 @@ makeCharacter:
 	sw $s1, -532($t7) #put golden in pixel in row 3
 	
 	jr $ra
-
-# make doodle jump up, update its address, and scroll the screen
-jumpUp:
-	lw $t4, charStartAddress
-	addi $t4, $t4, -128 # subtract to ensure its a valid address
-	sw $t4, charStartAddress
-	addi $t3, $t4, -2000 #represents the amount of jump in bytes
-	j jumpingUp
-jumpingUp:
-	blt, $t4, $t3, jumpDown # branch if t4 goes below max jumping capacity
-	
-	jal makeBoard
-	jal makeLedges
-	jal makeCharacter
-	jal displayScore
-	jal scroll
-afterScroll:
-	addi $t4, $t4, -128
-	sw $t4, charStartAddress
-	
-	lw $t6, ledge5StartAddress
-	addi $t6, $t6, 4 #make the moving ledge move right
-	sw $t6, ledge5StartAddress
-
-	lw $t6, 0xffff0000 # load value for keystroke
-	beq $t6, 1, checkInput1 # if there is a keystroke, branch to check j or k
-NoInput1:	
-	li $v0, 32
-	lw $a0, sleep
-	syscall
-	
-	j jumpingUp
-checkInput1:
-	jal checkJK
-	
-	li $v0, 32
-	lw $a0, sleep
-	syscall
-	
-	j jumpingUp
-	
-# make doodle jump down, update its address, and check its landing
-jumpDown:
-	lw $t3, charBottomAddress # minimum point the doodle should jump down to
-	
-	lw $t4, charStartAddress # load the start address of the doodle
-	addi $t4, $t4, 128 #add 256 since the exit condition of jump up made charStartAddress invalid address
-	sw $t4, charStartAddress
-
-	j jumpingDown
-jumpingDown:
-	bgt, $t4, $t3, jumpUp 
-	
-	jal makeBoard
-	jal makeLedges
-	jal makeCharacter
-	jal displayScore
-	jal checkLanding
-afterCheckLanding:
-	lw $t3, charBottomAddress # load charBottom address into t3 in case it changed
-	
-	lw $t4, charStartAddress # load back into t4 in case it changed
-	addi $t4, $t4, 128
-	sw $t4, charStartAddress
-	
-	lw $t6, ledge5StartAddress
-	addi $t6, $t6, -4 #make the ledge move left
-	sw $t6, ledge5StartAddress
-	
-	lw $t6, 0xffff0000 # load value for keystroke into t7 
-	beq $t6, 1, checkInput2 # if there is a keystroke, branch to check j or k
-NoInput2:	
-	li $v0, 32
-	lw $a0, sleep
-	syscall
-	j jumpingDown
-checkInput2:
-	jal checkJK
-	li $v0, 32
-	lw $a0, sleep
-	syscall
-	j jumpingDown
-	
-ledge1Setup:
-	lw $t0, ledge1StartAddress
-	bgt $t0, $s6, setLedge1Address #if its start address is more than max display address, remake it
-	jr $ra
-setLedge1Address:	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 26 # set max value of random int
-	syscall
-	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2560 #add soo the ledge is near bottom of screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge1StartAddress
-	
-	jr $ra
-	
-ledge2Setup:
-	lw $t0, ledge2StartAddress
-	bgt $t0, $s6, setLedge2Address #if its start address is more than max display address, remake it
-	
-	jr $ra
-setLedge2Address:	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 26 # set max value of random int
-	syscall
-	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge2StartAddress
-	
-	jr $ra
-	
-ledge3Setup:
-	lw $t0, ledge3StartAddress
-	bgt $t0, $s6, setLedge3Address #if its start address is more than max display address, remake it
-	jr $ra
-setLedge3Address:	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 26 # set max value of random int to 700
-	syscall
-	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1536 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge3StartAddress
-	
-	jr $ra
-	
-ledge4Setup:
-	lw $t0, ledge4StartAddress
-	bgt $t0, $s6, setLedge4Address #if its start address is more than max display address, remake it
-	jr $ra
-setLedge4Address:	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 26 # set max value of random int to 700
-	syscall
-	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 512 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge4StartAddress
-	
-	jr $ra
-		
-ledge5Setup:
-	lw $t0, ledge5StartAddress
-	bgt $t0, $s6, setLedge5Address #if its start address is more than max display address, remake it
-	
-	jr $ra
-setLedge5Address:	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 26 # set max value of random int
-	syscall
-	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1024 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge5StartAddress
-	
-	jr $ra
-	
-checkJK:
-	lw $t7, 0xffff0004 #load keystroke value into t7
-	beq $t7, 0x6a, respondToJ #check if it is j
-	beq $t7, 0x6b, respondToK #check if it is k
-afterRespond:
-	jr $ra #go back to jumping
-	
-respondToJ:
-	addi $t4, $t4, -4 #move left 1 pixel
-	sw $t4, charStartAddress #save the new address for char
-	j afterRespond
-	
-respondToK:
-	addi $t4, $t4, 4 #move right one pixel
-	sw $t4, charStartAddress #save the new address for char
-	j afterRespond
 	
 checkLanding: # load each of the ledges addresses, and check if the doodle has landed on any part of them
 	lw $t0, ledge1StartAddress
@@ -538,12 +449,14 @@ noLanding:
 	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
 	j afterCheckLanding #return to jumpingDown
 
+# if land on broken ledge, then remove the ledge by making its address invalid
 brokenLedge:
 	lw $t7, ledge4StartAddress
 	addi $t7, $t7, 4096 #add amount to make it invalid address (bc we wanna remove it_
 	sw $t7, ledge4StartAddress
 	j noLanding
 
+# if we land on a ledge, check which one
 ledgeNewBase:
 	beq $t7, $t0, ledge1Current
 	beq $t7, $t1, ledge2Current
@@ -556,6 +469,7 @@ afterChangeCurrentLedge:
 	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
 	jal jumpUp
 	
+# set this to be the current ledge we've landed on and update score and sleep if its different from te previous ledge	
 ledge1Current:
 	li $t7, 1
 	lw $t6, currentLedge # load previous current ledge
@@ -583,7 +497,8 @@ ledge5Current:
 	sw $t7, currentLedge # update current ledge
 	bne $t6, 5, updateScoreAndSleep #if the landed ledge is different from current ledge, update score
 	j afterChangeCurrentLedge
-	
+
+# update the score and sleep variables 		
 updateScoreAndSleep:
 	lw $t7, score
 	addi $t7, $t7, 1 #update score since we landed on a ledge
@@ -597,56 +512,7 @@ afterCheckScore:
 	sw $t7, sleep
 	j afterChangeCurrentLedge
 	
-scroll:
-	lw $t7, charBottomAddress	
-	addi $t7, $t7, 128
-	bge $t7, $s6, doneScrolling #s6 is the max address in first row. $t3 cant go below first row
-	sw $t7, charBottomAddress
-	
-	lw $t0, ledge1StartAddress
-	addi $t0, $t0, 128
-	sw $t0, ledge1StartAddress
-	
-	lw $t1, ledge2StartAddress
-	addi $t1, $t1, 128
-	sw $t1, ledge2StartAddress
-
-	lw $t2, ledge3StartAddress
-	addi $t2, $t2, 128
-	sw $t2, ledge3StartAddress
-	
-	lw $t7, ledge4StartAddress
-	addi $t7, $t7, 128
-	sw $t7, ledge4StartAddress
-	
-	lw $t7, ledge5StartAddress
-	addi $t7, $t7, 128
-	sw $t7, ledge5StartAddress
-	
-	addi $t3, $t3, 128 #adjust the max jump height since we scroll down
-
-doneScrolling:
-	jal ledge1Setup
-	jal ledge2Setup
-	jal ledge3Setup
-	jal ledge4Setup
-	jal ledge5Setup
-
-	j afterScroll
-
-gameOver:
-	j makeGameOverScreen
-waitForR:
-	lw $t6, 0xffff0000 # load value for if keystroke into t6 
-	beq $t6, 1, checkR # if there is a keystroke, branch to check r
-	j waitForR
-checkR:
-	lw $t7, 0xffff0004 
-	beq $t7, 0x72, restartGame # if keystroke was r, then restart the game
-	j waitForR # if keystroke wasn't r, keep waiting
-restartGame:	
-	j startGame
-	
+# print a message at certain scores (5, 10, 15)	
 checkScoreAndPrint:
 	lw $t7, score
 	beq $t7, 5, printGood
@@ -740,6 +606,149 @@ printPoggers:
 	li $a0, 300
 	syscall
 	j afterCheckScore
+
+# move each object down by one row so the screen "scrolls"		
+scroll:
+	lw $t7, charBottomAddress	
+	addi $t7, $t7, 128
+	bge $t7, $s6, doneScrolling #s6 is the max address in first row. $t3 cant go below first row
+	sw $t7, charBottomAddress
+	
+	lw $t0, ledge1StartAddress
+	addi $t0, $t0, 128
+	sw $t0, ledge1StartAddress
+	
+	lw $t1, ledge2StartAddress
+	addi $t1, $t1, 128
+	sw $t1, ledge2StartAddress
+
+	lw $t2, ledge3StartAddress
+	addi $t2, $t2, 128
+	sw $t2, ledge3StartAddress
+	
+	lw $t7, ledge4StartAddress
+	addi $t7, $t7, 128
+	sw $t7, ledge4StartAddress
+	
+	lw $t7, ledge5StartAddress
+	addi $t7, $t7, 128
+	sw $t7, ledge5StartAddress
+	
+	addi $t3, $t3, 128 #adjust the max jump height since we scroll down
+
+doneScrolling:
+	jal resetLedge1
+	jal resetLedge2
+	jal resetLedge3
+	jal resetLedge4
+	jal resetLedge5
+
+	j afterScroll
+
+# resets ledge address if necessary		
+resetLedge1:
+	lw $t0, ledge1StartAddress
+	bgt $t0, $s6, setLedge1Address #if its start address is more than max display address, remake it
+	jr $ra
+setLedge1Address:	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 26 # set max value of random int
+	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 2560 #add soo the ledge is near bottom of screen
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge1StartAddress
+	
+	jr $ra
+	
+# resets ledge address if necessary			
+resetLedge2:
+	lw $t0, ledge2StartAddress
+	bgt $t0, $s6, setLedge2Address #if its start address is more than max display address, remake it
+	
+	jr $ra
+setLedge2Address:	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 26 # set max value of random int
+	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge2StartAddress
+	
+	jr $ra
+
+# resets ledge address if necessary			
+resetLedge3:
+	lw $t0, ledge3StartAddress
+	bgt $t0, $s6, setLedge3Address #if its start address is more than max display address, remake it
+	jr $ra
+setLedge3Address:	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 26 # set max value of random int to 700
+	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 1536 #add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge3StartAddress
+	
+	jr $ra
+	
+# resets ledge address if necessary			
+resetLedge4:
+	lw $t0, ledge4StartAddress
+	bgt $t0, $s6, setLedge4Address #if its start address is more than max display address, remake it
+	jr $ra
+setLedge4Address:	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 26 # set max value of random int to 700
+	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 512 #add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge4StartAddress
+	
+	jr $ra
+
+# resets ledge address if necessary		
+resetLedge5:
+	lw $t0, ledge5StartAddress
+	bgt $t0, $s6, setLedge5Address #if its start address is more than max display address, remake it
+	
+	jr $ra
+setLedge5Address:	
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 26 # set max value of random int
+	syscall
+	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 1024 #add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 #add display address + random int to get new start 
+	sw $t7, ledge5StartAddress
+	
+	jr $ra
+
+gameOver:
+	j makeGameOverScreen
+waitForR:
+	lw $t6, 0xffff0000 # load value for if keystroke into t6 
+	beq $t6, 1, checkR # if there is a keystroke, branch to check r
+	j waitForR
+checkR:
+	lw $t7, 0xffff0004 
+	beq $t7, 0x72, restartGame # if keystroke was r, then restart the game
+	j waitForR # if keystroke wasn't r, keep waiting
+restartGame:	
+	j startGame
 	
 makeGameOverScreen:
 	jal makeBoard
@@ -893,7 +902,8 @@ makeStartScreen:
 	jal makeT
 	
 	j waitForS
-	
+
+# display the score by dividing by 10 and showing the remainder		
 displayScore:
 	lw $t7, score
 	li $t6, 10
