@@ -342,6 +342,40 @@ makeCharacter:
 	sw $s1, -532($t7) #put golden in pixel in row 3
 	
 	jr $ra
+
+# display the score by dividing by 10 and showing the remainder		
+displayScore:
+	lw $t7, score
+	li $t6, 10
+	li $t5, 112 # initial offset
+divide:
+	div $t7, $t6
+	mflo $t7 #put quotient in
+	mfhi $t0 #put remainder in	
+	
+	add $a0, $s0, $t5 #load offset in
+	add $a1, $zero, $s1 #load colour in
+	
+	beq, $t0, 0, make0
+	beq, $t0, 1, make1
+	beq, $t0, 2, make2
+	beq, $t0, 3, make3
+	beq, $t0, 4, make4
+	beq, $t0, 5, make5
+	beq, $t0, 6, make6
+	beq, $t0, 7, make7
+	beq, $t0, 8, make8
+	beq, $t0, 9, make9
+	
+afterPrintNumber:
+	beqz, $t7, backToJump
+	
+	addi $t5, $t5, -16 #decrement offset so next number can be printed
+	
+	j divide
+
+backToJump:
+	jr $ra
 	
 checkLanding: # load each of the ledges addresses, and check if the doodle has landed on any part of them
 	lw $t0, ledge1StartAddress
@@ -902,40 +936,6 @@ makeStartScreen:
 	jal makeT
 	
 	j waitForS
-
-# display the score by dividing by 10 and showing the remainder		
-displayScore:
-	lw $t7, score
-	li $t6, 10
-	li $t5, 112 # initial offset
-divide:
-	div $t7, $t6
-	mflo $t7 #put quotient in
-	mfhi $t0 #put remainder in	
-	
-	add $a0, $s0, $t5 #load offset in
-	add $a1, $zero, $s1 #load colour in
-	
-	beq, $t0, 0, make0
-	beq, $t0, 1, make1
-	beq, $t0, 2, make2
-	beq, $t0, 3, make3
-	beq, $t0, 4, make4
-	beq, $t0, 5, make5
-	beq, $t0, 6, make6
-	beq, $t0, 7, make7
-	beq, $t0, 8, make8
-	beq, $t0, 9, make9
-	
-afterPrintNumber:
-	beqz, $t7, backToJump
-	
-	addi $t5, $t5, -16 #decrement offset so next number can be printed
-	
-	j divide
-
-backToJump:
-	jr $ra
 
 make0:	
 	# make top of 0
