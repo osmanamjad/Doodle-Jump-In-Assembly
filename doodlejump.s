@@ -24,7 +24,7 @@
 # - M53: moving platform and fragile platform that cannot be landed on.
 #
 # Link to video demonstration for final submission:
-# - (insert YouTube / MyMedia / other URL here). 
+# - https://youtu.be/CQrIrP9wFME
 #
 # Any additional information that the TA needs to know:
 #####################################################################
