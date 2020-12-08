@@ -51,10 +51,13 @@
 	lw $s5, charBottomAddress # $s5 stores the default bottom address 
 	li $s6, 3968 # $s6 stores the maximum display address of the character (1 row  above last row)
 	li $s7, 4096 # $s7 stores maximum display address for board.
+
 main:
 	add $s6, $s0, $s6 # never changed
 	add $s7, $s0, $s7 # never changed
 	j makeStartScreen
+
+# wait for user to enter s to start the game
 waitForS:
 	lw $t6, 0xffff0000 # load value for if keystroke into t6 
 	beq $t6, 1, checkS # if there is a keystroke, branch to check s
@@ -64,6 +67,7 @@ checkS:
 	beq $t7, 0x73, startGame # if keystroke was s, then start the game
 	j waitForS # if keystroke wasn't s, keep waiting
 	
+#start the game by intializing values and drawing necessarys objects	
 startGame:
 	li $t7, 0
 	sw $t7, score #ensure score is 0 when we start/restart a game
@@ -72,7 +76,7 @@ startGame:
 	li $t7, 100 
 	sw $t7, sleep #ensure sleep is set back on restart
 	
-	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
+	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUp
 	sw $t7, charStartAddress # store the value of t7 into charStartAddress
 	
 	li $t7, 4096
@@ -80,73 +84,179 @@ startGame:
 	sw $t7, charBottomAddress
 	lw $s5, charBottomAddress #store the default bottom address
 	
-	jal makeBoardSetup
-
-	jal makeBoardBlue
-	
-	jal makeLedgesSetup
-	
+	jal makeBoard
+	jal initializeLedges
 	jal makeLedges
-	
-	jal jumpUpSetup
+	jal jumpUp
 
-makeBoardSetup:
+#make the board by colouring the screen blue
+makeBoard:
 	li $t7, 4096		# total size of board 
 	add $t7, $t7, $s0	# set to base address + 4096 offset
 	li $t6, 4096		# to keep track of how many pixels we've coloured
 	
-	jr $ra
+	j colourBoard # loop over all the pixels and colour them
 	
-makeBoardBlue:
+colourBoard:
 	subi $t7, $t7, 4
 	subi $t6, $t6, 4
 	sw $s4, ($t7) # paint each unit
 	
-	beqz $t6, doneMakingBoard
-	j makeBoardBlue
-doneMakingBoard:
+	beqz $t6, doneColouringBoard
+	j colourBoard
+doneColouringBoard:
+	jr $ra #return to where makeBoard was called
+	
+# initialize the start addresses of all the ledges (only used when game is started)
+# chooses random numbers and manipulates them to ensure ledges arent on two sides of the screen 
+# (they shouldn't go thru the right side of the screen and come out of the left or vice versa)
+initializeLedges:
+	# initialize ledge1
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 25 # set max value of random int
+	syscall
+	addi $a0, $a0, 7 # add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 # multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 3584 # add so the ledge is near bottom of screen
+	add $t7, $s0, $a0 # add display address + random int to get new start 
+	sw $t7, ledge1StartAddress
+	sw $t7, charBottomAddress
+	addi $t7, $t7, -128 #use this value for charStartAddress when the game starts
+	sw $t7, charStartAddress
+	
+	# initialize ledge2
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 25 # set max value of random int
+	syscall
+	addi $a0, $a0, 7 # add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 # multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 2048 # add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 # add display address + random int to get new start 
+	sw $t7, ledge2StartAddress
+	
+	# initialize ledge3
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 25 # set max value of random int
+	syscall
+	addi $a0, $a0, 7 # add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 # multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 512 # add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 # add display address + random int to get new start 
+	sw $t7, ledge3StartAddress
+	
+	# initialize ledge4
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 25 # set max value of random int
+	syscall
+	addi $a0, $a0, 7 # add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 # multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 1280 # add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 # add display address + random int to get new start 
+	sw $t7, ledge4StartAddress
+
+	# initialize ledge5
+	li $v0, 42 # prepare syscall to produce random int
+	li $a0, 0 
+	li $a1, 25 # set max value of random int
+	syscall
+	addi $a0, $a0, 7 # add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
+	sll $a0, $a0, 2 # multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
+	addi $a0, $a0, 2816 # add so the ledge isnt too high on the screen
+	add $t7, $s0, $a0 # add display address + random int to get new start 
+	sw $t7, ledge5StartAddress
+	
 	jr $ra
 	
+# make all the ledges on the board based on their addresses 	
+makeLedges:
+	add $a0, $ra, $zero # store the initial return address  
+	
+	lw $t7, ledge1StartAddress #load the address in
+	jal createNormalLedge
+
+	lw $t7, ledge2StartAddress #load the address into t7
+	jal createNormalLedge
+	
+	lw $t7, ledge3StartAddress #load the address into t7
+	jal createNormalLedge
+	
+	# create a broken ledge 
+	lw $t7, ledge4StartAddress #load the address into t7
+	sw $s2, ($t7) 
+	sw $s2, -8($t7) 
+	sw $s2, -16($t7)
+	sw $s2, -24($t7)
+	sw $s3, 104($t7) #put black in for leg
+	sw $s3, 128($t7) #put black in for leg
+	
+	lw $t7, ledge5StartAddress #load the address into t7
+	jal createNormalLedge
+	
+	jr $a0 #since a0 stores the initial return address of the first call we want to return to
+	
+createNormalLedge:
+	#make ledge
+	sw $s2, ($t7) 
+	sw $s2, -4($t7) 
+	sw $s2, -8($t7) 
+	sw $s2, -12($t7)
+	sw $s2, -16($t7)
+	sw $s2, -20($t7)
+	sw $s2, -24($t7) 
+	
+	#make legs of ledge
+	sw $s3, 104($t7)  
+	sw $s3, 128($t7)
+	
+	jr $ra
+	
+#draw the character (cute giraffe)
 makeCharacter: 
 	lw $t7, charStartAddress
 	
-	#make legs
-	sw $s3, ($t7) #put colour in pixel in row 1
-	sw $s3, -8($t7) #put colour in pixel in row 1
-	sw $s3, -16($t7) #put colour in pixel in row 1
+	# make black legs
+	sw $s3, ($t7) 
+	sw $s3, -8($t7) 
+	sw $s3, -16($t7) 
 	
-	sw $s1, -128($t7) #put golden in pixel in row 2
-	sw $s3, -132($t7) #put golden in pixel in row 2
-	sw $s1, -136($t7) #put black in pixel in row 2
-	sw $s3, -140($t7) #put golden in pixel in row 2
-	sw $s1, -144($t7) #put golden in pixel in row 2
+	# make yellow and black body
+	sw $s1, -128($t7) 
+	sw $s3, -132($t7) 
+	sw $s1, -136($t7) 
+	sw $s3, -140($t7) 
+	sw $s1, -144($t7) 
+	sw $s3, -256($t7) 
+	sw $s1, -260($t7) 
+	sw $s3, -264($t7) 
+	sw $s1, -268($t7) 
+	sw $s3, -272($t7)
 	
-	sw $s3, -256($t7) #put golden in pixel in row 3
-	sw $s1, -260($t7) #put golden in pixel in row 3
-	sw $s3, -264($t7) #put golden in pixel in row 3
-	sw $s1, -268($t7) #put golden in pixel in row 3
-	sw $s3, -272($t7) #put golden in pixel in row 3
-	
+	# make neck
 	sw $s3, -396($t7) #put golden in pixel in row 3
 	sw $s1, -400($t7) #put golden in pixel in row 3
 	
+	# make head
 	sw $s1, -524($t7) #put golden in pixel in row 3
 	sw $s3, -528($t7) #put golden in pixel in row 3
 	sw $s1, -532($t7) #put golden in pixel in row 3
 	
 	jr $ra
 
-jumpUpSetup:
+# make doodle jump up, update its address, and scroll the screen
+jumpUp:
 	lw $t4, charStartAddress
 	addi $t4, $t4, -128 # subtract to ensure its a valid address
 	sw $t4, charStartAddress
 	addi $t3, $t4, -2000 #represents the amount of jump in bytes
-	j jumpUp
-jumpUp:
-	blt, $t4, $t3, jumpDownSetup # branch if t4 goes below max jumping capacity
+	j jumpingUp
+jumpingUp:
+	blt, $t4, $t3, jumpDown # branch if t4 goes below max jumping capacity
 	
-	jal makeBoardSetup
-	jal makeBoardBlue
+	jal makeBoard
 	jal makeLedges
 	jal makeCharacter
 	jal displayScore
@@ -166,8 +276,7 @@ NoInput1:
 	lw $a0, sleep
 	syscall
 	
-	j jumpUp
-
+	j jumpingUp
 checkInput1:
 	jal checkJK
 	
@@ -175,21 +284,21 @@ checkInput1:
 	lw $a0, sleep
 	syscall
 	
-	j jumpUp
-
-jumpDownSetup:
+	j jumpingUp
+	
+# make doodle jump down, update its address, and check its landing
+jumpDown:
 	lw $t3, charBottomAddress # minimum point the doodle should jump down to
 	
 	lw $t4, charStartAddress # load the start address of the doodle
 	addi $t4, $t4, 128 #add 256 since the exit condition of jump up made charStartAddress invalid address
 	sw $t4, charStartAddress
 
-	j jumpDown
-jumpDown:
-	bgt, $t4, $t3, jumpUpSetup 
+	j jumpingDown
+jumpingDown:
+	bgt, $t4, $t3, jumpUp 
 	
-	jal makeBoardSetup
-	jal makeBoardBlue
+	jal makeBoard
 	jal makeLedges
 	jal makeCharacter
 	jal displayScore
@@ -211,17 +320,13 @@ NoInput2:
 	li $v0, 32
 	lw $a0, sleep
 	syscall
-	
-	j jumpDown
-
+	j jumpingDown
 checkInput2:
 	jal checkJK
-	
 	li $v0, 32
 	lw $a0, sleep
 	syscall
-
-	j jumpDown
+	j jumpingDown
 	
 ledge1Setup:
 	lw $t0, ledge1StartAddress
@@ -307,125 +412,6 @@ setLedge5Address:
 	addi $a0, $a0, 1024 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge5StartAddress
-	
-	jr $ra
-	
-makeLedgesSetup:
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 25 # set max value of random int
-	syscall
-	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 3584 #add so the ledge is near bottom of screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge1StartAddress
-	sw $t7, charBottomAddress
-	addi $t7, $t7, -128 #use this value for charStartAddress
-	sw $t7, charStartAddress
-	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 25 # set max value of random int
-	syscall
-	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge2StartAddress
-	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 25 # set max value of random int
-	syscall
-	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 512 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge3StartAddress
-	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 25 # set max value of random int
-	syscall
-	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1280 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge4StartAddress
-	
-	li $v0, 42 # prepare syscall to produce random int
-	li $a0, 0 
-	li $a1, 25 # set max value of random int
-	syscall
-	addi $a0, $a0, 7 #add 7 so that 4*random int is at least 28 (number of pixels in a ledge is 28)
-	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2816 #add so the ledge isnt too high on the screen
-	add $t7, $s0, $a0 #add display address + random int to get new start 
-	sw $t7, ledge5StartAddress
-	
-makeLedges:
-	lw $t7, ledge1StartAddress #load the address into t7
-	
-	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, -4($t7) #put green in pixel in row 1
-	sw $s2, -8($t7) #put green in pixel in row 1
-	sw $s2, -12($t7) #put green in pixel in row 1
-	sw $s2, -16($t7) #put green in pixel in row 1
-	sw $s2, -20($t7) #put green in pixel in row 1
-	sw $s2, -24($t7) #put green in pixel in row 1
-	sw $s3, 104($t7) #put black in 
-	sw $s3, 128($t7) #put black in
-	
-	
-	lw $t7, ledge2StartAddress #load the address into t7
-	
-	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, -4($t7) #put green in pixel in row 1
-	sw $s2, -8($t7) #put green in pixel in row 1
-	sw $s2, -12($t7) #put green in pixel in row 1
-	sw $s2, -16($t7) #put green in pixel in row 1
-	sw $s2, -20($t7) #put green in pixel in row 1
-	sw $s2, -24($t7) #put green in pixel in row 1
-	sw $s3, 104($t7) #put black in 
-	sw $s3, 128($t7) #put black in
-	
-	
-	lw $t7, ledge3StartAddress #load the address into t7
-	
-	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, -4($t7) #put green in pixel in row 1
-	sw $s2, -8($t7) #put green in pixel in row 1
-	sw $s2, -12($t7) #put green in pixel in row 1
-	sw $s2, -16($t7) #put green in pixel in row 1
-	sw $s2, -20($t7) #put green in pixel in row 1
-	sw $s2, -24($t7) #put green in pixel in row 1
-	sw $s3, 104($t7) #put black in 
-	sw $s3, 128($t7) #put black in
-	
-	lw $t7, ledge4StartAddress #load the address into t7
-	
-	sw $s2, ($t7) #put green in pixel in row 1
-	#sw $s2, -4($t7) #put green in pixel in row 1
-	sw $s2, -8($t7) #put green in pixel in row 1
-	#sw $s2, -12($t7) #put green in pixel in row 1
-	sw $s2, -16($t7) #put green in pixel in row 1
-	#sw $s2, -20($t7) #put green in pixel in row 1
-	sw $s2, -24($t7) #put green in pixel in row 1
-	sw $s3, 104($t7) #put black in 
-	sw $s3, 128($t7) #put black in
-	
-	lw $t7, ledge5StartAddress #load the address into t7
-	
-	sw $s2, ($t7) #put green in pixel in row 1
-	sw $s2, -4($t7) #put green in pixel in row 1
-	sw $s2, -8($t7) #put green in pixel in row 1
-	sw $s2, -12($t7) #put green in pixel in row 1
-	sw $s2, -16($t7) #put green in pixel in row 1
-	sw $s2, -20($t7) #put green in pixel in row 1
-	sw $s2, -24($t7) #put green in pixel in row 1
-	sw $s3, 104($t7) #put black in 
-	sw $s3, 128($t7) #put black in
 	
 	jr $ra
 	
@@ -550,7 +536,7 @@ checkLanding: # load each of the ledges addresses, and check if the doodle has l
 
 noLanding:	
 	sw $s5, charBottomAddress #if we don't land on a ledge, then make bottom back to default
-	j afterCheckLanding #return to jumpDown
+	j afterCheckLanding #return to jumpingDown
 
 brokenLedge:
 	lw $t7, ledge4StartAddress
@@ -568,7 +554,7 @@ afterChangeCurrentLedge:
 	addi $t3, $t3, 128 #add 128 because it will be subtracted in jump up setup
 	sw $t3, charStartAddress
 	sw $t3, charBottomAddress # since we've landed, make current charStartAddress the new bottom
-	jal jumpUpSetup
+	jal jumpUp
 	
 ledge1Current:
 	li $t7, 1
@@ -756,8 +742,7 @@ printPoggers:
 	j afterCheckScore
 	
 makeGameOverScreen:
-	jal makeBoardSetup
-	jal makeBoardBlue
+	jal makeBoard
 	
 	addi $a0, $s0, 32 #put offset into a0
 	add $a1, $zero, $s1 #put desired colour into a1 
@@ -1290,7 +1275,7 @@ makeO:
 	sw $a1, 4($a0) #put colour in pixel
 	sw $a1, 8($a0) #put colour in pixel
 	
-	# make left vertical part of 0
+	# make left vertical part of O
 	sw $a1, 128($a0) #put colour in pixel
 	sw $a1, 256($a0) #put colour in pixel
 	sw $a1, 384($a0) #put colour in pixel
@@ -1429,13 +1414,13 @@ makeZ:
 	sw $a1, 4($a0) #put colour in pixel
 	sw $a1, 8($a0) #put colour in pixel
 	
-	# make right side of z
+	# make right side of Z
 	sw $a1, 136($a0) #put colour in pixel
 	
 	# make left side of Z
 	sw $a1, 384($a0) #put colour in pixel
 	
-	# make middle part of P
+	# make middle part of Z
 	sw $a1, 260($a0) #put colour in pixel
 	
 	# make bottom part of Z
@@ -1444,15 +1429,7 @@ makeZ:
 	sw $a1, 520($a0) #put colour in pixel
 	
 	jr $ra # return to make word call
-
-CentralProcessing:
-	#Check for keyboard input
-	#Update the location of the Doodler accordingly
-	#Check for collision events (between the Doodler and the screen)
-	#Update the location of all platforms and other objects
-	#Redraw the screen
-	#Sleep.
-	#Go back to Step #1
+	
 exit:
 	li $v0, 10 # terminate the program gracefully
 	syscall
