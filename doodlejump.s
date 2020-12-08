@@ -40,7 +40,7 @@
 	ledge5StartAddress: .word 0
 	score: .word 0
 	currentLedge: .word 0
-	sleep: .word 130
+	sleep: .word 100
 	
 .text
 	lw $s0, displayAddress	# $s0 stores the base address for display
@@ -69,7 +69,7 @@ startGame:
 	sw $t7, score #ensure score is 0 when we start/restart a game
 	sw $t7, currentLedge #ensure current ledge is reset to 0 on restart
 	
-	li $t7, 130 
+	li $t7, 100 
 	sw $t7, sleep #ensure sleep is set back on restart
 	
 	add $t7, $s0, 4036 #128 more than 3908 because 128 will be subtracted in jumpUpSetup
@@ -225,7 +225,7 @@ checkInput2:
 	
 ledge1Setup:
 	lw $t0, ledge1StartAddress
-	bgt $t0, $s7, setLedge1Address #if its start address is more than max display address, remake it
+	bgt $t0, $s6, setLedge1Address #if its start address is more than max display address, remake it
 	jr $ra
 setLedge1Address:	
 	li $v0, 42 # prepare syscall to produce random int
@@ -234,7 +234,7 @@ setLedge1Address:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2944 #add soo the ledge is near bottom of screen
+	addi $a0, $a0, 2560 #add soo the ledge is near bottom of screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge1StartAddress
 	
@@ -242,7 +242,7 @@ setLedge1Address:
 	
 ledge2Setup:
 	lw $t0, ledge2StartAddress
-	bgt $t0, $s7, setLedge2Address #if its start address is more than max display address, remake it
+	bgt $t0, $s6, setLedge2Address #if its start address is more than max display address, remake it
 	
 	jr $ra
 setLedge2Address:	
@@ -252,7 +252,7 @@ setLedge2Address:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 2304 #add so the ledge isnt too high on the screen
+	addi $a0, $a0, 2048 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge2StartAddress
 	
@@ -260,7 +260,7 @@ setLedge2Address:
 	
 ledge3Setup:
 	lw $t0, ledge3StartAddress
-	bgt $t0, $s7, setLedge3Address #if its start address is more than max display address, remake it
+	bgt $t0, $s6, setLedge3Address #if its start address is more than max display address, remake it
 	jr $ra
 setLedge3Address:	
 	li $v0, 42 # prepare syscall to produce random int
@@ -269,7 +269,7 @@ setLedge3Address:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1664 #add so the ledge isnt too high on the screen
+	addi $a0, $a0, 1536 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge3StartAddress
 	
@@ -277,7 +277,7 @@ setLedge3Address:
 	
 ledge4Setup:
 	lw $t0, ledge4StartAddress
-	bgt $t0, $s7, setLedge4Address #if its start address is more than max display address, remake it
+	bgt $t0, $s6, setLedge4Address #if its start address is more than max display address, remake it
 	jr $ra
 setLedge4Address:	
 	li $v0, 42 # prepare syscall to produce random int
@@ -286,7 +286,7 @@ setLedge4Address:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 1024 #add so the ledge isnt too high on the screen
+	addi $a0, $a0, 512 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge4StartAddress
 	
@@ -294,7 +294,7 @@ setLedge4Address:
 		
 ledge5Setup:
 	lw $t0, ledge5StartAddress
-	bgt $t0, $s7, setLedge5Address #if its start address is more than max display address, remake it
+	bgt $t0, $s6, setLedge5Address #if its start address is more than max display address, remake it
 	
 	jr $ra
 setLedge5Address:	
@@ -304,7 +304,7 @@ setLedge5Address:
 	syscall
 	addi $a0, $a0, 6 #add 6 so that 4*random int is at least 24 (number of pixels in a ledge is 28)
 	sll $a0, $a0, 2 #multiply the random int by 4 to ensure its a multiple of 4 to use with displayAddress
-	addi $a0, $a0, 384 #add so the ledge isnt too high on the screen
+	addi $a0, $a0, 1024 #add so the ledge isnt too high on the screen
 	add $t7, $s0, $a0 #add display address + random int to get new start 
 	sw $t7, ledge5StartAddress
 	
@@ -459,76 +459,90 @@ checkLanding: # load each of the ledges addresses, and check if the doodle has l
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
-	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t7, -4
 	beq $t7, $t0, ledgeNewBase
 	beq $t7, $t1, ledgeNewBase
 	beq $t7, $t2, ledgeNewBase
 	beq $t7, $t6, ledgeNewBase
+	
+	#AFTER checking all the valid platforms, check if we landed on a broken platform
+	#this is to ensure that if broken ledge coincides with valid ledge, then we should land on valid edge 
+	addi $t7, $t3, 152
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
+	beq $t7, $t5, brokenLedge
+	addi $t7, $t7, -4
 	beq $t7, $t5, brokenLedge
 	
 	addi $t7, $t3, 128
@@ -592,7 +606,7 @@ updateScoreAndSleep:
 	j checkScoreAndPrint
 afterCheckScore:	
 	lw $t7, sleep
-	addi $t7, $t7, -4 #update score since we landed on a ledge
+	addi $t7, $t7, -2 #update score since we landed on a ledge
 	blt $t7, 30, afterChangeCurrentLedge #if sleep is already at 30, dont let it go more down
 	sw $t7, sleep
 	j afterChangeCurrentLedge
